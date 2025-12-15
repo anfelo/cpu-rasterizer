@@ -82,8 +82,8 @@ static Renderer *gRenderer = nullptr;
 
     float vertices[] = {100.0f, 40.0f, 60.0f, 80.0f, 150.0f, 120.0f};
     // for (int i = 0; i < 6; i+=2) {
-    //   vertices[i] = 400 + vertices[i] + sin(t) * 150;
-    //   vertices[i+1] = 300 + vertices[i+1] + cos(t * 0.8f) * 100;
+    //   vertices[i] = vertices[i]*cos(t) - vertices[i+1]*sin(t);
+    //   vertices[i+1] = vertices[i]*sin(t) + vertices[i+1]*cos(t);
     // }
     gRenderer->drawTriangles(vertices, 6, 0xFF0000);
 

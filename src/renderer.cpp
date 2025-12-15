@@ -1,5 +1,7 @@
 #include "renderer.h"
 #include <cmath>
+#include <iostream>
+#include <vector>
 
 Renderer::Renderer(int w, int h, int pixelScale)
     : width(w), height(h), scale(pixelScale) {
@@ -42,36 +44,67 @@ void Renderer::drawCircle(int cx, int cy, int r, uint32_t color) {
 }
 
 void Renderer::drawTriangles(float vertices[6], int num, uint32_t color) {
+    std::vector<V2> edge_points;
+
     for (int i = 0; i < num; i += 2) {
         V2 p1 = {(int)vertices[i], (int)vertices[i + 1]};
 
         for (int j = i + 2; j < num; j += 2) {
             V2 p2 = {(int)vertices[j], (int)vertices[j + 1]};
 
-            drawLine(p1, p2, color);
+            drawLine(&edge_points, p1, p2, color);
+        }
+    }
+
+    fillTriangle(&edge_points, color);
+}
+
+void Renderer::fillTriangle(std::vector<V2> *points, uint32_t color) {
+    // Sort by y component
+    std::sort(points->begin(), points->end(),
+              [](const V2 &a, const V2 &b) { return a.y < b.y; });
+
+    std::vector<V2> inner_points;
+    for (size_t i = 0; i < points->size() - 1; ++i) {
+        V2 p1 = points->at(i);
+        V2 p2 = points->at(i + 1);
+
+        if (p1.y != p2.y) {
+            continue;
+        }
+
+        if (p1.x < p2.x) {
+            for (int x = p1.x; x < p2.x; ++x) {
+                setPixel(x, p1.y, color);
+            }
+        } else {
+            for (int x = p2.x; x < p1.x; ++x) {
+                setPixel(x, p1.y, color);
+            }
         }
     }
 }
 
 // Bresenham's Line algorithm
 // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-void Renderer::drawLine(V2 p1, V2 p2, uint32_t color) {
+void Renderer::drawLine(std::vector<V2> *points, V2 p1, V2 p2, uint32_t color) {
     if (abs(p2.y - p1.y) < abs(p2.x - p1.x)) {
         if (p1.x > p2.x) {
-            drawLineHorizontal(p2, p1, color);
+            drawLineHorizontal(points, p2, p1, color);
         } else {
-            drawLineHorizontal(p1, p2, color);
+            drawLineHorizontal(points, p1, p2, color);
         }
     } else {
         if (p1.y > p2.y) {
-            drawLineVertical(p2, p1, color);
+            drawLineVertical(points, p2, p1, color);
         } else {
-            drawLineVertical(p1, p2, color);
+            drawLineVertical(points, p1, p2, color);
         }
     }
 }
 
-void Renderer::drawLineHorizontal(V2 p1, V2 p2, uint32_t color) {
+void Renderer::drawLineHorizontal(std::vector<V2> *points, V2 p1, V2 p2,
+                                  uint32_t color) {
     int dx = p2.x - p1.x;
     int dy = p2.y - p1.y;
 
@@ -86,6 +119,7 @@ void Renderer::drawLineHorizontal(V2 p1, V2 p2, uint32_t color) {
 
     for (int x = p1.x; x < p2.x; ++x) {
         setPixel(x, y, color);
+        points->push_back(V2{x, y});
 
         if (d > 0) {
             y += yi;
@@ -96,7 +130,8 @@ void Renderer::drawLineHorizontal(V2 p1, V2 p2, uint32_t color) {
     }
 }
 
-void Renderer::drawLineVertical(V2 p1, V2 p2, uint32_t color) {
+void Renderer::drawLineVertical(std::vector<V2> *points, V2 p1, V2 p2,
+                                uint32_t color) {
     int dx = p2.x - p1.x;
     int dy = p2.y - p1.y;
 
@@ -111,6 +146,7 @@ void Renderer::drawLineVertical(V2 p1, V2 p2, uint32_t color) {
 
     for (int y = p1.y; y < p2.y; ++y) {
         setPixel(x, y, color);
+        points->push_back(V2{x, y});
 
         if (d > 0) {
             x += xi;
