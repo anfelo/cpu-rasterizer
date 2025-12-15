@@ -1,7 +1,7 @@
 #include "renderer.h"
 #include <cmath>
 
-Renderer::Renderer(int w, int h) : width(w), height(h) {
+Renderer::Renderer(int w, int h, int pixelScale) : width(w), height(h), scale(pixelScale) {
     pixels = new uint32_t[w * h];
     clear();
 }

@@ -39,10 +39,16 @@ static Renderer *gRenderer = nullptr;
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
-    const int W = 800, H = 600;
-    gRenderer = new Renderer(W, H);
+    // Internal Resolution: scaled 4x to 800x600
+    const int w = 200, h = 150, pixelSize = 4;
+    gRenderer = new Renderer(w, h, pixelSize);
 
-    NSRect frame = NSMakeRect(100, 100, W, H);
+    NSRect frame = NSMakeRect(
+        100,
+        100,
+        gRenderer->windowWidth(),
+        gRenderer->windowHeight()
+    );
     window = [[NSWindow alloc]
         initWithContentRect:frame
         styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable
@@ -74,7 +80,7 @@ static Renderer *gRenderer = nullptr;
     // gRenderer->drawCircle(cx, cy, 40, 0xFFe94560);
     // gRenderer->drawCircle(400, 300, 20, 0xFF0f4c75);
 
-    float vertices[] = {50.0f, 40.0f, 10.0f, 80.0f, 100.0f, 80.0f};
+    float vertices[] = {100.0f, 40.0f, 60.0f, 80.0f, 150.0f, 120.0f};
     // for (int i = 0; i < 6; i+=2) {
     //   vertices[i] = 400 + vertices[i] + sin(t) * 150;
     //   vertices[i+1] = 300 + vertices[i+1] + cos(t * 0.8f) * 100;

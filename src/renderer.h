@@ -7,9 +7,17 @@ class Renderer {
   public:
     uint32_t *pixels;
     int width, height;
+    int scale; // Pixel scale factor
 
-    Renderer(int w, int h);
+    Renderer(int w, int h, int pixelScale = 1);
     ~Renderer();
+
+    int windowWidth() const {
+        return width * scale;
+    }
+    int windowHeight() const {
+        return height * scale;
+    }
 
     void clear(uint32_t color = 0xFF000000);
     void setPixel(int x, int y, uint32_t color);
