@@ -1,7 +1,8 @@
 #include "renderer.h"
 #include <cmath>
 
-Renderer::Renderer(int w, int h, int pixelScale) : width(w), height(h), scale(pixelScale) {
+Renderer::Renderer(int w, int h, int pixelScale)
+    : width(w), height(h), scale(pixelScale) {
     pixels = new uint32_t[w * h];
     clear();
 }
@@ -42,40 +43,37 @@ void Renderer::drawCircle(int cx, int cy, int r, uint32_t color) {
 
 void Renderer::drawTriangles(float vertices[6], int num, uint32_t color) {
     for (int i = 0; i < num; i += 2) {
-        float p1x = vertices[i];
-        float p1y = vertices[i + 1];
+        V2 p1 = {(int)vertices[i], (int)vertices[i + 1]};
 
         for (int j = i + 2; j < num; j += 2) {
-            float p2x = vertices[j];
-            float p2y = vertices[j + 1];
+            V2 p2 = {(int)vertices[j], (int)vertices[j + 1]};
 
-            drawLine(p1x, p1y, p2x, p2y, color);
+            drawLine(p1, p2, color);
         }
     }
 }
 
 // Bresenham's Line algorithm
 // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-void Renderer::drawLine(int x1, int y1, int x2, int y2, uint32_t color) {
-    if (abs(y2 - y1) < abs(x2 - x1)) {
-        if (x1 > x2) {
-            drawLineHorizontal(x2, y2, x1, y1, color);
+void Renderer::drawLine(V2 p1, V2 p2, uint32_t color) {
+    if (abs(p2.y - p1.y) < abs(p2.x - p1.x)) {
+        if (p1.x > p2.x) {
+            drawLineHorizontal(p2, p1, color);
         } else {
-            drawLineHorizontal(x1, y1, x2, y2, color);
+            drawLineHorizontal(p1, p2, color);
         }
     } else {
-        if (y1 > y2) {
-            drawLineVertical(x2, y2, x1, y1, color);
+        if (p1.y > p2.y) {
+            drawLineVertical(p2, p1, color);
         } else {
-            drawLineVertical(x1, y1, x2, y2, color);
+            drawLineVertical(p1, p2, color);
         }
     }
 }
 
-void Renderer::drawLineHorizontal(int x1, int y1, int x2, int y2,
-                                  uint32_t color) {
-    int dx = x2 - x1;
-    int dy = y2 - y1;
+void Renderer::drawLineHorizontal(V2 p1, V2 p2, uint32_t color) {
+    int dx = p2.x - p1.x;
+    int dy = p2.y - p1.y;
 
     int yi = 1;
     if (dy < 0) {
@@ -84,9 +82,9 @@ void Renderer::drawLineHorizontal(int x1, int y1, int x2, int y2,
     }
 
     int d = (2 * dy) - dx;
-    int y = y1;
+    int y = p1.y;
 
-    for (int x = x1; x < x2; ++x) {
+    for (int x = p1.x; x < p2.x; ++x) {
         setPixel(x, y, color);
 
         if (d > 0) {
@@ -98,10 +96,9 @@ void Renderer::drawLineHorizontal(int x1, int y1, int x2, int y2,
     }
 }
 
-void Renderer::drawLineVertical(int x1, int y1, int x2, int y2,
-                                uint32_t color) {
-    int dx = x2 - x1;
-    int dy = y2 - y1;
+void Renderer::drawLineVertical(V2 p1, V2 p2, uint32_t color) {
+    int dx = p2.x - p1.x;
+    int dy = p2.y - p1.y;
 
     int xi = 1;
     if (dx < 0) {
@@ -110,9 +107,9 @@ void Renderer::drawLineVertical(int x1, int y1, int x2, int y2,
     }
 
     int d = (2 * dx) - dy;
-    int x = x1;
+    int x = p1.x;
 
-    for (int y = y1; y < y2; ++y) {
+    for (int y = p1.y; y < p2.y; ++y) {
         setPixel(x, y, color);
 
         if (d > 0) {

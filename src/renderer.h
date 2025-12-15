@@ -3,6 +3,11 @@
 
 #include <cstdint>
 
+struct V2 {
+    int x;
+    int y;
+};
+
 class Renderer {
   public:
     uint32_t *pixels;
@@ -24,9 +29,9 @@ class Renderer {
     void fillRect(int x, int y, int w, int h, uint32_t color);
     void drawCircle(int cx, int cy, int r, uint32_t color);
     void drawTriangles(float vertices[6], int num, uint32_t color);
-    void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
-    void drawLineVertical(int x1, int y1, int x2, int y2, uint32_t color);
-    void drawLineHorizontal(int x1, int y1, int x2, int y2, uint32_t color);
+    void drawLine(V2 p1, V2 p2, uint32_t color);
+    void drawLineVertical(V2 p1, V2 p2, uint32_t color);
+    void drawLineHorizontal(V2 p1, V2 p2, uint32_t color);
 };
 
 #endif
