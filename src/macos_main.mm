@@ -66,14 +66,20 @@ static Renderer *gRenderer = nullptr;
     static float t = 0;
     t += 0.016f;
 
-    // All rendering in pure C++
     gRenderer->clear(0xFF1a1a2e);
-    gRenderer->fillRect(50, 50, 200, 100, 0xFF16213e);
+    // gRenderer->fillRect(50, 50, 200, 100, 0xFF16213e);
+    //
+    // int cx = 400 + sin(t) * 150;
+    // int cy = 300 + cos(t * 0.8f) * 100;
+    // gRenderer->drawCircle(cx, cy, 40, 0xFFe94560);
+    // gRenderer->drawCircle(400, 300, 20, 0xFF0f4c75);
 
-    int cx = 400 + sin(t) * 150;
-    int cy = 300 + cos(t * 0.8f) * 100;
-    gRenderer->drawCircle(cx, cy, 40, 0xFFe94560);
-    gRenderer->drawCircle(400, 300, 20, 0xFF0f4c75);
+    float vertices[] = {50.0f, 40.0f, 10.0f, 80.0f, 100.0f, 80.0f};
+    // for (int i = 0; i < 6; i+=2) {
+    //   vertices[i] = 400 + vertices[i] + sin(t) * 150;
+    //   vertices[i+1] = 300 + vertices[i+1] + cos(t * 0.8f) * 100;
+    // }
+    gRenderer->drawTriangles(vertices, 6, 0xFF0000);
 
     [view setNeedsDisplay:YES];
 }

@@ -15,6 +15,10 @@ class Renderer {
     void setPixel(int x, int y, uint32_t color);
     void fillRect(int x, int y, int w, int h, uint32_t color);
     void drawCircle(int cx, int cy, int r, uint32_t color);
+    void drawTriangles(float vertices[6], int num, uint32_t color);
+    void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
+    void drawLineVertical(int x1, int y1, int x2, int y2, uint32_t color);
+    void drawLineHorizontal(int x1, int y1, int x2, int y2, uint32_t color);
 };
 
 #endif
