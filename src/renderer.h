@@ -29,7 +29,7 @@ class Renderer {
     void setPixel(int x, int y, uint32_t color);
     void fillRect(int x, int y, int w, int h, uint32_t color);
     void drawCircle(int cx, int cy, int r, uint32_t color);
-    void drawTriangles(float vertices[6], int num, uint32_t color);
+    void drawTriangles(float *vertices, int num, uint32_t color);
     void fillTriangle(std::vector<V2> *points, uint32_t color);
     void drawLine(std::vector<V2> *points, V2 p1, V2 p2, uint32_t color);
     void drawLineVertical(std::vector<V2> *points, V2 p1, V2 p2,

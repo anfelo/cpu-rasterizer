@@ -80,12 +80,13 @@ static Renderer *gRenderer = nullptr;
     // gRenderer->drawCircle(cx, cy, 40, 0xFFe94560);
     // gRenderer->drawCircle(400, 300, 20, 0xFF0f4c75);
 
-    float vertices[] = {100.0f, 40.0f, 60.0f, 80.0f, 150.0f, 120.0f};
+    // float vertices[] = {100.0f, 40.0f, 60.0f, 80.0f, 150.0f, 120.0f};
     // for (int i = 0; i < 6; i+=2) {
     //   vertices[i] = vertices[i]*cos(t) - vertices[i+1]*sin(t);
     //   vertices[i+1] = vertices[i]*sin(t) + vertices[i+1]*cos(t);
     // }
-    gRenderer->drawTriangles(vertices, 6, 0xFF0000);
+    float vertices[] = {60.0f, 40.0f, 120.0f, 40.0f, 60.0f, 100.0f, 120.0f, 100.0f};
+    gRenderer->drawTriangles(vertices, 8, 0xFF0000);
 
     [view setNeedsDisplay:YES];
 }

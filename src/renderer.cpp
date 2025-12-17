@@ -1,5 +1,7 @@
 #include "renderer.h"
 #include <cmath>
+#include <cstddef>
+#include <cstdio>
 #include <iostream>
 #include <vector>
 
@@ -43,7 +45,11 @@ void Renderer::drawCircle(int cx, int cy, int r, uint32_t color) {
     }
 }
 
-void Renderer::drawTriangles(float vertices[6], int num, uint32_t color) {
+void Renderer::drawTriangles(float *vertices, int num, uint32_t color) {
+    if (vertices == NULL) {
+        return;
+    }
+
     std::vector<V2> edge_points;
 
     for (int i = 0; i < num; i += 2) {
@@ -74,11 +80,11 @@ void Renderer::fillTriangle(std::vector<V2> *points, uint32_t color) {
         }
 
         if (p1.x < p2.x) {
-            for (int x = p1.x; x < p2.x; ++x) {
+            for (int x = p1.x; x <= p2.x; ++x) {
                 setPixel(x, p1.y, color);
             }
         } else {
-            for (int x = p2.x; x < p1.x; ++x) {
+            for (int x = p2.x; x <= p1.x; ++x) {
                 setPixel(x, p1.y, color);
             }
         }
@@ -117,8 +123,12 @@ void Renderer::drawLineHorizontal(std::vector<V2> *points, V2 p1, V2 p2,
     int d = (2 * dy) - dx;
     int y = p1.y;
 
-    for (int x = p1.x; x < p2.x; ++x) {
-        setPixel(x, y, color);
+    for (int x = p1.x; x <= p2.x; ++x) {
+        // DEBUG: Paint the vertices with a different color
+        uint32_t c = (x == p1.x && y == p1.y) || (x == p2.x && y == p2.y)
+                         ? 0xFFFF00
+                         : color;
+        setPixel(x, y, c);
         points->push_back(V2{x, y});
 
         if (d > 0) {
@@ -144,8 +154,12 @@ void Renderer::drawLineVertical(std::vector<V2> *points, V2 p1, V2 p2,
     int d = (2 * dx) - dy;
     int x = p1.x;
 
-    for (int y = p1.y; y < p2.y; ++y) {
-        setPixel(x, y, color);
+    for (int y = p1.y; y <= p2.y; ++y) {
+        // DEBUG: Paint the vertices with a different color
+        uint32_t c = (x == p1.x && y == p1.y) || (x == p2.x && y == p2.y)
+                         ? 0xFFFF00
+                         : color;
+        setPixel(x, y, c);
         points->push_back(V2{x, y});
 
         if (d > 0) {
