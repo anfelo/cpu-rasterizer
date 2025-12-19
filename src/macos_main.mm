@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #include "renderer.h"
 
-static Renderer *gRenderer = nullptr;
+static Renderer gRenderer;
 
 @interface PixelView : NSView
 @end
@@ -9,12 +9,12 @@ static Renderer *gRenderer = nullptr;
 @implementation PixelView
 
 - (void)drawRect:(NSRect)dirtyRect {
-    if (!gRenderer) return;
+    if (!gRenderer.ready) return;
 
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef ctx = CGBitmapContextCreate(
-        gRenderer->pixels, gRenderer->width, gRenderer->height, 8,
-        gRenderer->width * 4, colorSpace,
+        gRenderer.pixels, gRenderer.width, gRenderer.height, 8,
+        gRenderer.width * 4, colorSpace,
         kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little
     );
 
@@ -41,13 +41,13 @@ static Renderer *gRenderer = nullptr;
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     // Internal Resolution: scaled 4x to 800x600
     const int w = 200, h = 150, pixelSize = 4;
-    gRenderer = new Renderer(w, h, pixelSize);
+    gRenderer = Renderer_Create(w, h, pixelSize);
 
     NSRect frame = NSMakeRect(
         100,
         100,
-        gRenderer->windowWidth(),
-        gRenderer->windowHeight()
+        gRenderer.windowWidth,
+        gRenderer.windowHeight
     );
     window = [[NSWindow alloc]
         initWithContentRect:frame
@@ -72,9 +72,7 @@ static Renderer *gRenderer = nullptr;
     static float t = 0;
     t += 0.016f;
 
-    gRenderer->clear(0xFF1a1a2e);
-    // gRenderer->fillRect(50, 50, 200, 100, 0xFF16213e);
-    //
+    Renderer_ClearBackground(&gRenderer, 0xFF1a1a2e);
     // int cx = 400 + sin(t) * 150;
     // int cy = 300 + cos(t * 0.8f) * 100;
     // gRenderer->drawCircle(cx, cy, 40, 0xFFe94560);
@@ -86,13 +84,13 @@ static Renderer *gRenderer = nullptr;
     //   vertices[i+1] = vertices[i]*sin(t) + vertices[i+1]*cos(t);
     // }
     float vertices[] = {60.0f, 40.0f, 120.0f, 40.0f, 60.0f, 100.0f, 120.0f, 100.0f};
-    gRenderer->drawTriangles(vertices, 8, 0xFF0000);
+    Renderer_DrawTriangles(&gRenderer, vertices, 8, 0xFF0000);
 
     [view setNeedsDisplay:YES];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
-    delete gRenderer;
+    Renderer_Destroy(&gRenderer);
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {

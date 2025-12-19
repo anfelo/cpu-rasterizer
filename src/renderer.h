@@ -9,33 +9,27 @@ struct V2 {
     int y;
 };
 
-class Renderer {
-  public:
+struct Renderer {
+    bool ready;
     uint32_t *pixels;
     int width, height;
-    int scale; // Pixel scale factor
-
-    Renderer(int w, int h, int pixelScale = 1);
-    ~Renderer();
-
-    int windowWidth() const {
-        return width * scale;
-    }
-    int windowHeight() const {
-        return height * scale;
-    }
-
-    void clear(uint32_t color = 0xFF000000);
-    void setPixel(int x, int y, uint32_t color);
-    void fillRect(int x, int y, int w, int h, uint32_t color);
-    void drawCircle(int cx, int cy, int r, uint32_t color);
-    void drawTriangles(float *vertices, int num, uint32_t color);
-    void fillTriangle(std::vector<V2> *points, uint32_t color);
-    void drawLine(std::vector<V2> *points, V2 p1, V2 p2, uint32_t color);
-    void drawLineVertical(std::vector<V2> *points, V2 p1, V2 p2,
-                          uint32_t color);
-    void drawLineHorizontal(std::vector<V2> *points, V2 p1, V2 p2,
-                            uint32_t color);
+    int windowWidth, windowHeight;
+    int pixelScale;
 };
+
+Renderer Renderer_Create(int w, int h, int pixelScale = 1);
+void Renderer_Destroy(Renderer *R);
+void Renderer_ClearBackground(Renderer *R, uint32_t color = 0xFF000000);
+void Renderer_SetPixel(Renderer *R, int x, int y, uint32_t color);
+void Renderer_DrawTriangles(Renderer *R, float *vertices, int num,
+                            uint32_t color);
+void Renderer_FillTriangle(Renderer *R, std::vector<V2> *points,
+                           uint32_t color);
+void Renderer_DrawLine(Renderer *R, std::vector<V2> *points, V2 p1, V2 p2,
+                       uint32_t color);
+void Renderer_DrawLineVertical(Renderer *R, std::vector<V2> *points, V2 p1,
+                               V2 p2, uint32_t color);
+void Renderer_DrawLineHorizontal(Renderer *R, std::vector<V2> *points, V2 p1,
+                                 V2 p2, uint32_t color);
 
 #endif

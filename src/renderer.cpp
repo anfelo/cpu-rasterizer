@@ -2,50 +2,56 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
-#include <iostream>
 #include <vector>
 
-Renderer::Renderer(int w, int h, int pixelScale)
-    : width(w), height(h), scale(pixelScale) {
-    pixels = new uint32_t[w * h];
-    clear();
+Renderer Renderer_Create(int w, int h, int pixelScale) {
+    Renderer r = {.width = w,
+                  .height = h,
+                  .windowWidth = w * pixelScale,
+                  .windowHeight = h * pixelScale,
+                  .pixelScale = pixelScale};
+
+    r.pixels = new uint32_t[w * h];
+
+    r.ready = true;
+
+    return r;
 }
 
-Renderer::~Renderer() {
-    delete[] pixels;
+void Renderer_Destroy(Renderer *r) {
+    if (r == nullptr) {
+        return;
+    }
+
+    delete[] r->pixels;
 }
 
-void Renderer::clear(uint32_t color) {
-    for (int i = 0; i < width * height; i++) {
-        pixels[i] = color;
+void Renderer_ClearBackground(Renderer *r, uint32_t color) {
+    if (r == nullptr) {
+        return;
+    }
+
+    for (int i = 0; i < r->width * r->height; i++) {
+        r->pixels[i] = color;
     }
 }
 
-void Renderer::setPixel(int x, int y, uint32_t color) {
-    if (x >= 0 && x < width && y >= 0 && y < height) {
-        pixels[y * width + x] = color;
+void Renderer_SetPixel(Renderer *r, int x, int y, uint32_t color) {
+    if (r == nullptr) {
+        return;
+    }
+
+    if (x >= 0 && x < r->width && y >= 0 && y < r->height) {
+        r->pixels[y * r->width + x] = color;
     }
 }
 
-void Renderer::fillRect(int x, int y, int w, int h, uint32_t color) {
-    for (int py = y; py < y + h; py++) {
-        for (int px = x; px < x + w; px++) {
-            setPixel(px, py, color);
-        }
+void Renderer_DrawTriangles(Renderer *r, float *vertices, int num,
+                            uint32_t color) {
+    if (r == nullptr) {
+        return;
     }
-}
 
-void Renderer::drawCircle(int cx, int cy, int r, uint32_t color) {
-    for (int y = -r; y <= r; y++) {
-        for (int x = -r; x <= r; x++) {
-            if (x * x + y * y <= r * r) {
-                setPixel(cx + x, cy + y, color);
-            }
-        }
-    }
-}
-
-void Renderer::drawTriangles(float *vertices, int num, uint32_t color) {
     if (vertices == NULL) {
         return;
     }
@@ -58,14 +64,19 @@ void Renderer::drawTriangles(float *vertices, int num, uint32_t color) {
         for (int j = i + 2; j < num; j += 2) {
             V2 p2 = {(int)vertices[j], (int)vertices[j + 1]};
 
-            drawLine(&edge_points, p1, p2, color);
+            Renderer_DrawLine(r, &edge_points, p1, p2, color);
         }
     }
 
-    fillTriangle(&edge_points, color);
+    Renderer_FillTriangle(r, &edge_points, color);
 }
 
-void Renderer::fillTriangle(std::vector<V2> *points, uint32_t color) {
+void Renderer_FillTriangle(Renderer *r, std::vector<V2> *points,
+                           uint32_t color) {
+    if (r == nullptr) {
+        return;
+    }
+
     // Sort by y component
     std::sort(points->begin(), points->end(),
               [](const V2 &a, const V2 &b) { return a.y < b.y; });
@@ -81,11 +92,11 @@ void Renderer::fillTriangle(std::vector<V2> *points, uint32_t color) {
 
         if (p1.x < p2.x) {
             for (int x = p1.x; x <= p2.x; ++x) {
-                setPixel(x, p1.y, color);
+                Renderer_SetPixel(r, x, p1.y, color);
             }
         } else {
             for (int x = p2.x; x <= p1.x; ++x) {
-                setPixel(x, p1.y, color);
+                Renderer_SetPixel(r, x, p1.y, color);
             }
         }
     }
@@ -93,24 +104,33 @@ void Renderer::fillTriangle(std::vector<V2> *points, uint32_t color) {
 
 // Bresenham's Line algorithm
 // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-void Renderer::drawLine(std::vector<V2> *points, V2 p1, V2 p2, uint32_t color) {
+void Renderer_DrawLine(Renderer *r, std::vector<V2> *points, V2 p1, V2 p2,
+                       uint32_t color) {
+    if (r == nullptr) {
+        return;
+    }
+
     if (abs(p2.y - p1.y) < abs(p2.x - p1.x)) {
         if (p1.x > p2.x) {
-            drawLineHorizontal(points, p2, p1, color);
+            Renderer_DrawLineHorizontal(r, points, p2, p1, color);
         } else {
-            drawLineHorizontal(points, p1, p2, color);
+            Renderer_DrawLineHorizontal(r, points, p1, p2, color);
         }
     } else {
         if (p1.y > p2.y) {
-            drawLineVertical(points, p2, p1, color);
+            Renderer_DrawLineVertical(r, points, p2, p1, color);
         } else {
-            drawLineVertical(points, p1, p2, color);
+            Renderer_DrawLineVertical(r, points, p1, p2, color);
         }
     }
 }
 
-void Renderer::drawLineHorizontal(std::vector<V2> *points, V2 p1, V2 p2,
-                                  uint32_t color) {
+void Renderer_DrawLineHorizontal(Renderer *r, std::vector<V2> *points, V2 p1,
+                                 V2 p2, uint32_t color) {
+    if (r == nullptr) {
+        return;
+    }
+
     int dx = p2.x - p1.x;
     int dy = p2.y - p1.y;
 
@@ -128,7 +148,7 @@ void Renderer::drawLineHorizontal(std::vector<V2> *points, V2 p1, V2 p2,
         uint32_t c = (x == p1.x && y == p1.y) || (x == p2.x && y == p2.y)
                          ? 0xFFFF00
                          : color;
-        setPixel(x, y, c);
+        Renderer_SetPixel(r, x, y, c);
         points->push_back(V2{x, y});
 
         if (d > 0) {
@@ -140,8 +160,12 @@ void Renderer::drawLineHorizontal(std::vector<V2> *points, V2 p1, V2 p2,
     }
 }
 
-void Renderer::drawLineVertical(std::vector<V2> *points, V2 p1, V2 p2,
-                                uint32_t color) {
+void Renderer_DrawLineVertical(Renderer *r, std::vector<V2> *points, V2 p1,
+                               V2 p2, uint32_t color) {
+    if (r == nullptr) {
+        return;
+    }
+
     int dx = p2.x - p1.x;
     int dy = p2.y - p1.y;
 
@@ -159,7 +183,7 @@ void Renderer::drawLineVertical(std::vector<V2> *points, V2 p1, V2 p2,
         uint32_t c = (x == p1.x && y == p1.y) || (x == p2.x && y == p2.y)
                          ? 0xFFFF00
                          : color;
-        setPixel(x, y, c);
+        Renderer_SetPixel(r, x, y, c);
         points->push_back(V2{x, y});
 
         if (d > 0) {
