@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include "math.h"
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -47,7 +48,7 @@ void Renderer_SetPixel(Renderer *r, int x, int y, uint32_t color) {
 }
 
 void Renderer_DrawTriangles(Renderer *r, float *vertices, int num,
-                            uint32_t color) {
+                            Vec3 position, uint32_t color) {
     if (r == nullptr) {
         return;
     }
@@ -56,13 +57,48 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int num,
         return;
     }
 
-    std::vector<V2> edge_points;
+    // Transformations
+    Mat4 view = Mat4_Create();
+    view = Mat4_Translate(view, Vec3{0.0f, 0.0f, -3.0f});
+    Mat4 projection = Mat4_Perspective(
+        DegToRadians(45.0f), (float)r->width / r->height, 0.1f, 100.0f);
+    // Mat4 projection = Mat4_Ortho(-1.0f, 1.0f, 3.0f/4.0f, -3.0f/4.0f, 0.1f, 100.0f);
 
+    Mat4 model = Mat4_Create();
+    // model = Mat4_Translate(model, position);
+
+    // Vertices are in local space (NDC Coordinates)
+    float verts[num];
     for (int i = 0; i < num; i += 2) {
-        V2 p1 = {(int)vertices[i], (int)vertices[i + 1]};
+        Vec4 v = {vertices[i], vertices[i + 1], 0.0f, 1.0f};
+        // Model -> World
+        v = Vec4_Transform(v, model);
+        // World -> View
+        v = Vec4_Transform(v, view);
+        // View -> Clip (Projection)
+        v = Vec4_Transform(v, projection);
+
+        // Clip space
+        verts[i] = v.x;
+        verts[i + 1] = v.y;
+
+        // Clip -> NDC (Perspective Divide)
+        verts[i] = verts[i] / v.w;
+        verts[i + 1] = verts[i + 1] / v.w;
+
+        // NDC -> Screen
+        verts[i] = ((float)r->width / 2) * (verts[i] + 1);
+        verts[i + 1] = ((float)r->height / 2) * (verts[i + 1] + 1);
+    }
+
+    std::vector<P2> edge_points;
+
+    // Rendering
+    for (int i = 0; i < num; i += 2) {
+        P2 p1 = {(int)verts[i], (int)verts[i + 1]};
 
         for (int j = i + 2; j < num; j += 2) {
-            V2 p2 = {(int)vertices[j], (int)vertices[j + 1]};
+            P2 p2 = {(int)verts[j], (int)verts[j + 1]};
 
             Renderer_DrawLine(r, &edge_points, p1, p2, color);
         }
@@ -71,7 +107,7 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int num,
     Renderer_FillTriangle(r, &edge_points, color);
 }
 
-void Renderer_FillTriangle(Renderer *r, std::vector<V2> *points,
+void Renderer_FillTriangle(Renderer *r, std::vector<P2> *points,
                            uint32_t color) {
     if (r == nullptr) {
         return;
@@ -79,12 +115,12 @@ void Renderer_FillTriangle(Renderer *r, std::vector<V2> *points,
 
     // Sort by y component
     std::sort(points->begin(), points->end(),
-              [](const V2 &a, const V2 &b) { return a.y < b.y; });
+              [](const P2 &a, const P2 &b) { return a.y < b.y; });
 
-    std::vector<V2> inner_points;
+    std::vector<P2> inner_points;
     for (size_t i = 0; i < points->size() - 1; ++i) {
-        V2 p1 = points->at(i);
-        V2 p2 = points->at(i + 1);
+        P2 p1 = points->at(i);
+        P2 p2 = points->at(i + 1);
 
         if (p1.y != p2.y) {
             continue;
@@ -104,7 +140,7 @@ void Renderer_FillTriangle(Renderer *r, std::vector<V2> *points,
 
 // Bresenham's Line algorithm
 // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-void Renderer_DrawLine(Renderer *r, std::vector<V2> *points, V2 p1, V2 p2,
+void Renderer_DrawLine(Renderer *r, std::vector<P2> *points, P2 p1, P2 p2,
                        uint32_t color) {
     if (r == nullptr) {
         return;
@@ -125,8 +161,8 @@ void Renderer_DrawLine(Renderer *r, std::vector<V2> *points, V2 p1, V2 p2,
     }
 }
 
-void Renderer_DrawLineHorizontal(Renderer *r, std::vector<V2> *points, V2 p1,
-                                 V2 p2, uint32_t color) {
+void Renderer_DrawLineHorizontal(Renderer *r, std::vector<P2> *points, P2 p1,
+                                 P2 p2, uint32_t color) {
     if (r == nullptr) {
         return;
     }
@@ -149,7 +185,7 @@ void Renderer_DrawLineHorizontal(Renderer *r, std::vector<V2> *points, V2 p1,
                          ? 0xFFFF00
                          : color;
         Renderer_SetPixel(r, x, y, c);
-        points->push_back(V2{x, y});
+        points->push_back(P2{x, y});
 
         if (d > 0) {
             y += yi;
@@ -160,8 +196,8 @@ void Renderer_DrawLineHorizontal(Renderer *r, std::vector<V2> *points, V2 p1,
     }
 }
 
-void Renderer_DrawLineVertical(Renderer *r, std::vector<V2> *points, V2 p1,
-                               V2 p2, uint32_t color) {
+void Renderer_DrawLineVertical(Renderer *r, std::vector<P2> *points, P2 p1,
+                               P2 p2, uint32_t color) {
     if (r == nullptr) {
         return;
     }
@@ -184,7 +220,7 @@ void Renderer_DrawLineVertical(Renderer *r, std::vector<V2> *points, V2 p1,
                          ? 0xFFFF00
                          : color;
         Renderer_SetPixel(r, x, y, c);
-        points->push_back(V2{x, y});
+        points->push_back(P2{x, y});
 
         if (d > 0) {
             x += xi;
