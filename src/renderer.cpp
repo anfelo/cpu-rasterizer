@@ -47,7 +47,7 @@ void Renderer_SetPixel(Renderer *r, int x, int y, uint32_t color) {
     }
 }
 
-void Renderer_DrawTriangles(Renderer *r, float *vertices, int num,
+void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
                             Vec3 position, Vec3 rotation, uint32_t color) {
     if (r == nullptr) {
         return;
@@ -69,8 +69,8 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int num,
     model = Mat4_Rotate(model, rotation);
 
     // Vertices are in local space (NDC Coordinates)
-    for (int i = 0; i < num; i += 2) {
-        Vec4 v = {vertices[i], vertices[i + 1], 0.0f, 1.0f};
+    for (int i = 0; i < length * size; i += size) {
+        Vec4 v = {vertices[i], vertices[i + 1], vertices[i + 2], 1.0f};
         // Model -> World
         v = Vec4_Transform(v, model);
         // World -> View
@@ -81,23 +81,26 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int num,
         // Clip space
         vertices[i] = v.x;
         vertices[i + 1] = v.y;
+        vertices[i + 2] = v.z;
 
         // Clip -> NDC (Perspective Divide)
         vertices[i] = vertices[i] / v.w;
         vertices[i + 1] = vertices[i + 1] / v.w;
+        vertices[i + 2] = vertices[i + 2] / v.w;
 
         // NDC -> Screen
         vertices[i] = ((float)r->width / 2) * (vertices[i] + 1);
         vertices[i + 1] = ((float)r->height / 2) * (vertices[i + 1] + 1);
+        vertices[i + 2] = ((float)r->height / 2) * (vertices[i + 2] + 1);
     }
 
     std::vector<P2> edge_points;
 
     // Rendering
-    for (int i = 0; i < num; i += 2) {
+    for (int i = 0; i < length * size; i += size) {
         P2 p1 = {(int)vertices[i], (int)vertices[i + 1]};
 
-        for (int j = i + 2; j < num; j += 2) {
+        for (int j = i + 6; j < length * size; j += size) {
             P2 p2 = {(int)vertices[j], (int)vertices[j + 1]};
 
             Renderer_DrawLine(r, &edge_points, p1, p2, color);
