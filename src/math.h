@@ -28,6 +28,10 @@ struct Mat4 {
 Mat4 Mat4_Create();
 Mat4 Mat4_Translate(Mat4 mat4, Vec3 vec3);
 Mat4 Mat4_Scale(Mat4 mat4, Vec3 vec3);
+Mat4 Mat4_Rotate(Mat4 mat4, Vec3 vec3);
+Mat4 Mat4_RotateX(Mat4 mat4, float deg);
+Mat4 Mat4_RotateY(Mat4 mat4, float deg);
+Mat4 Mat4_RotateZ(Mat4 mat4, float deg);
 Mat4 Mat4_Perspective(float fovy, float aspect, float zNear, float zFar);
 Mat4 Mat4_Ortho(float left, float right, float bottom, float top, float zNear,
                 float zFar);

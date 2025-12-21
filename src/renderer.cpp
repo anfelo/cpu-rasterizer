@@ -48,7 +48,7 @@ void Renderer_SetPixel(Renderer *r, int x, int y, uint32_t color) {
 }
 
 void Renderer_DrawTriangles(Renderer *r, float *vertices, int num,
-                            Vec3 position, uint32_t color) {
+                            Vec3 position, Vec3 rotation, uint32_t color) {
     if (r == nullptr) {
         return;
     }
@@ -62,13 +62,14 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int num,
     view = Mat4_Translate(view, Vec3{0.0f, 0.0f, -3.0f});
     Mat4 projection = Mat4_Perspective(
         DegToRadians(45.0f), (float)r->width / r->height, 0.1f, 100.0f);
-    // Mat4 projection = Mat4_Ortho(-1.0f, 1.0f, 3.0f/4.0f, -3.0f/4.0f, 0.1f, 100.0f);
+    // Mat4 projection = Mat4_Ortho(-1.0f, 1.0f, 3.0f/4.0f, -3.0f/4.0f, 0.1f,
+    // 100.0f);
 
     Mat4 model = Mat4_Create();
-    // model = Mat4_Translate(model, position);
+    model = Mat4_Rotate(model, rotation);
 
     // Vertices are in local space (NDC Coordinates)
-    float verts[num];
+    float *verts = new float[num];
     for (int i = 0; i < num; i += 2) {
         Vec4 v = {vertices[i], vertices[i + 1], 0.0f, 1.0f};
         // Model -> World

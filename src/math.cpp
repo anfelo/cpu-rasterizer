@@ -1,6 +1,5 @@
 #include "math.h"
 #include <cmath>
-#include <cstdio>
 
 Mat4 Mat4_Create() {
     Mat4 m4 = {
@@ -47,6 +46,67 @@ Mat4 Mat4_Scale(Mat4 mat4, Vec3 vec3) {
             m[12],     m[13],     m[14],      m[15],
         }
     };
+
+    return result;
+}
+
+
+Mat4 Mat4_RotateX(Mat4 mat4, float deg) {
+    float *m = mat4.data;
+    float c = cos(DegToRadians(deg));
+    float s = sin(DegToRadians(deg));
+
+    Mat4 result = {
+        .data = {
+            m[0], m[1], m[2], m[3],
+            m[4] * c - m[8] * s, m[5] * c - m[9] * s, m[6] * c - m[10] * s, m[7] * c - m[11] * s,
+            m[4] * s + m[8] * c, m[5] * s + m[9] * c, m[6] * s + m[10] * c, m[7] * s + m[11] * c,
+            m[12], m[13], m[14], m[15],
+        }
+    };
+
+    return result;
+}
+
+Mat4 Mat4_RotateY(Mat4 mat4, float deg) {
+    float *m = mat4.data;
+    float c = cos(DegToRadians(deg));
+    float s = sin(DegToRadians(deg));
+
+    Mat4 result = {
+        .data = {
+            m[0] * c + m[8] * s, m[1] * c + m[9] * s, m[2] * c + m[10] * s, m[3] * c + m[11] * s,
+            m[4], m[5], m[6], m[7],
+            -m[0] * s + m[8] * c, -m[1] * s + m[9] * c, -m[2] * s + m[10] * c, -m[3] * s + m[11] * c,
+            m[12], m[13], m[14], m[15],
+        }
+    };
+
+    return result;
+}
+
+Mat4 Mat4_RotateZ(Mat4 mat4, float deg) {
+    float *m = mat4.data;
+    float c = cos(DegToRadians(deg));
+    float s = sin(DegToRadians(deg));
+
+    Mat4 result = {
+        .data = {
+            m[0] * c - m[4] * s, m[1] * c - m[5] * s, m[2] * c - m[6] * s, m[3] * c - m[7] * s,
+            m[0] * s + m[4] * c, m[1] * s + m[5] * c, m[2] * s + m[6] * c, m[3] * s + m[7] * c,
+            m[8], m[9], m[10], m[11],
+            m[12], m[13], m[14], m[15],
+        }
+    };
+
+    return result;
+}
+
+Mat4 Mat4_Rotate(Mat4 mat4, Vec3 vec3) {
+    Mat4 result;
+    result = Mat4_RotateX(mat4, vec3.x);
+    result = Mat4_RotateY(result, vec3.y);
+    result = Mat4_RotateZ(result, vec3.z);
 
     return result;
 }

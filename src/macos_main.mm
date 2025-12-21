@@ -69,17 +69,6 @@ static Renderer gRenderer;
   t += 0.016f;
 
   Renderer_ClearBackground(&gRenderer, 0xFF1a1a2e);
-  // int cx = 400 + sin(t) * 150;
-  // int cy = 300 + cos(t * 0.8f) * 100;
-  // gRenderer->drawCircle(cx, cy, 40, 0xFFe94560);
-  // gRenderer->drawCircle(400, 300, 20, 0xFF0f4c75);
-
-  // float vertices[] = {100.0f, 40.0f, 60.0f, 80.0f, 150.0f, 120.0f};
-  // for (int i = 0; i < 6; i+=2) {
-  //   vertices[i] = vertices[i]*cos(t) - vertices[i+1]*sin(t);
-  //   vertices[i+1] = vertices[i]*sin(t) + vertices[i+1]*cos(t);
-  // }
-
   // Normalized Device Coordinates (NDC)
   float vertices[] = {
       0.5f,  0.5f,  // top right
@@ -88,7 +77,8 @@ static Renderer gRenderer;
       -0.5f, 0.5f,  // top left
   };
   Vec3 position = Vec3{60.0f, 40.f, 0.0f};
-  Renderer_DrawTriangles(&gRenderer, vertices, 8, position, 0xFF0000);
+  Vec3 rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
+  Renderer_DrawTriangles(&gRenderer, vertices, 8, position, rotation, 0xFF0000);
 
   [view setNeedsDisplay:YES];
 }
