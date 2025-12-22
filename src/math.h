@@ -1,7 +1,16 @@
 #ifndef MATH_H_
 #define MATH_H_
 
+#include <cstdint>
+
 const float PI = 3.141592653589793;
+
+struct ColorRGBA {
+    float r;
+    float g;
+    float b;
+    float a;
+};
 
 struct Vec2 {
     float x;
@@ -39,5 +48,8 @@ Mat4 Mat4_Ortho(float left, float right, float bottom, float top, float zNear,
 Vec4 Vec4_Transform(Vec4 vec4, Mat4 mat4);
 
 float DegToRadians(float deg);
+
+uint32_t ColorToInt(ColorRGBA color);
+ColorRGBA LerpRGB(ColorRGBA c1, ColorRGBA c2, float t);
 
 #endif

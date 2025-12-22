@@ -48,7 +48,7 @@ void Renderer_SetPixel(Renderer *r, int x, int y, uint32_t color) {
 }
 
 void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
-                            Vec3 position, Vec3 rotation, uint32_t color) {
+                            Vec3 position, Vec3 rotation) {
     if (r == nullptr) {
         return;
     }
@@ -94,48 +94,64 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
         vertices[i + 2] = ((float)r->height / 2) * (vertices[i + 2] + 1);
     }
 
-    std::vector<P2> edge_points;
+    std::vector<Pixel> edge_points;
 
     // Rendering
-    for (int i = 0; i < length * size; i += size) {
-        P2 p1 = {(int)vertices[i], (int)vertices[i + 1]};
+    for (int i = 0; i < length * size; i += (size * 3)) {
+        int p1i = i;
+        int p2i = i + size;
+        int p3i = i + (size * 2);
 
-        for (int j = i + 6; j < length * size; j += size) {
-            P2 p2 = {(int)vertices[j], (int)vertices[j + 1]};
+        ColorRGBA p1Color = {1.0f, 0.0f, 0.0f};
+        ColorRGBA p2Color = {1.0f, 0.0f, 0.0f};
+        ColorRGBA p3Color = {1.0f, 0.0f, 0.0f};
 
-            Renderer_DrawLine(r, &edge_points, p1, p2, color);
-        }
+        Pixel p1 = {(int)vertices[p1i], (int)vertices[p1i + 1], p1Color};
+        Pixel p2 = {(int)vertices[p2i], (int)vertices[p2i + 1], p2Color};
+        Pixel p3 = {(int)vertices[p3i], (int)vertices[p3i + 1], p3Color};
+
+        Renderer_DrawLine(r, &edge_points, p1, p2);
+        Renderer_DrawLine(r, &edge_points, p1, p3);
+        Renderer_DrawLine(r, &edge_points, p2, p3);
     }
 
-    Renderer_FillTriangle(r, &edge_points, color);
+    Renderer_FillTriangle(r, &edge_points);
 }
 
-void Renderer_FillTriangle(Renderer *r, std::vector<P2> *points,
-                           uint32_t color) {
+void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *points) {
     if (r == nullptr) {
         return;
     }
 
     // Sort by y component
     std::sort(points->begin(), points->end(),
-              [](const P2 &a, const P2 &b) { return a.y < b.y; });
+              [](const Pixel &a, const Pixel &b) { return a.y < b.y; });
 
-    std::vector<P2> inner_points;
     for (size_t i = 0; i < points->size() - 1; ++i) {
-        P2 p1 = points->at(i);
-        P2 p2 = points->at(i + 1);
+        Pixel p1 = points->at(i);
+        Pixel p2 = points->at(i + 1);
 
         if (p1.y != p2.y) {
             continue;
         }
 
+        if (p1.x == p2.x) {
+            continue;
+        }
+
         if (p1.x < p2.x) {
             for (int x = p1.x; x <= p2.x; ++x) {
-                Renderer_SetPixel(r, x, p1.y, color);
+                ColorRGBA colorRGB = LerpRGB(p1.color, p2.color,
+                                             (float)(x - p1.x) / (p2.x - p1.x));
+
+                Renderer_SetPixel(r, x, p1.y, ColorToInt(colorRGB));
             }
         } else {
             for (int x = p2.x; x <= p1.x; ++x) {
-                Renderer_SetPixel(r, x, p1.y, color);
+                ColorRGBA colorRGB = LerpRGB(p2.color, p1.color,
+                                             (float)(x - p2.x) / (p1.x - p2.x));
+
+                Renderer_SetPixel(r, x, p1.y, ColorToInt(colorRGB));
             }
         }
     }
@@ -143,29 +159,29 @@ void Renderer_FillTriangle(Renderer *r, std::vector<P2> *points,
 
 // Bresenham's Line algorithm
 // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-void Renderer_DrawLine(Renderer *r, std::vector<P2> *points, P2 p1, P2 p2,
-                       uint32_t color) {
+void Renderer_DrawLine(Renderer *r, std::vector<Pixel> *points, Pixel p1,
+                       Pixel p2) {
     if (r == nullptr) {
         return;
     }
 
     if (abs(p2.y - p1.y) < abs(p2.x - p1.x)) {
         if (p1.x > p2.x) {
-            Renderer_DrawLineHorizontal(r, points, p2, p1, color);
+            Renderer_DrawLineHorizontal(r, points, p2, p1);
         } else {
-            Renderer_DrawLineHorizontal(r, points, p1, p2, color);
+            Renderer_DrawLineHorizontal(r, points, p1, p2);
         }
     } else {
         if (p1.y > p2.y) {
-            Renderer_DrawLineVertical(r, points, p2, p1, color);
+            Renderer_DrawLineVertical(r, points, p2, p1);
         } else {
-            Renderer_DrawLineVertical(r, points, p1, p2, color);
+            Renderer_DrawLineVertical(r, points, p1, p2);
         }
     }
 }
 
-void Renderer_DrawLineHorizontal(Renderer *r, std::vector<P2> *points, P2 p1,
-                                 P2 p2, uint32_t color) {
+void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *points,
+                                 Pixel p1, Pixel p2) {
     if (r == nullptr) {
         return;
     }
@@ -183,12 +199,12 @@ void Renderer_DrawLineHorizontal(Renderer *r, std::vector<P2> *points, P2 p1,
     int y = p1.y;
 
     for (int x = p1.x; x <= p2.x; ++x) {
-        // DEBUG: Paint the vertices with a different color
-        uint32_t c = (x == p1.x && y == p1.y) || (x == p2.x && y == p2.y)
-                         ? 0xFFFF00
-                         : color;
-        Renderer_SetPixel(r, x, y, c);
-        points->push_back(P2{x, y});
+        ColorRGBA colorRGB =
+            LerpRGB(p1.color, p2.color, (float)(x - p1.x) / dx);
+
+        Renderer_SetPixel(r, x, y, ColorToInt(colorRGB));
+
+        points->push_back(Pixel{x, y, colorRGB});
 
         if (d > 0) {
             y += yi;
@@ -199,8 +215,8 @@ void Renderer_DrawLineHorizontal(Renderer *r, std::vector<P2> *points, P2 p1,
     }
 }
 
-void Renderer_DrawLineVertical(Renderer *r, std::vector<P2> *points, P2 p1,
-                               P2 p2, uint32_t color) {
+void Renderer_DrawLineVertical(Renderer *r, std::vector<Pixel> *points,
+                               Pixel p1, Pixel p2) {
     if (r == nullptr) {
         return;
     }
@@ -218,12 +234,12 @@ void Renderer_DrawLineVertical(Renderer *r, std::vector<P2> *points, P2 p1,
     int x = p1.x;
 
     for (int y = p1.y; y <= p2.y; ++y) {
-        // DEBUG: Paint the vertices with a different color
-        uint32_t c = (x == p1.x && y == p1.y) || (x == p2.x && y == p2.y)
-                         ? 0xFFFF00
-                         : color;
-        Renderer_SetPixel(r, x, y, c);
-        points->push_back(P2{x, y});
+        ColorRGBA colorRGB =
+            LerpRGB(p1.color, p2.color, (float)(y - p1.y) / dy);
+
+        Renderer_SetPixel(r, x, y, ColorToInt(colorRGB));
+
+        points->push_back(Pixel{x, y, colorRGB});
 
         if (d > 0) {
             x += xi;

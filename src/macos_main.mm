@@ -71,13 +71,8 @@ static Renderer gRenderer;
   Renderer_ClearBackground(&gRenderer, 0xFF1a1a2e);
 
   // Normalized Device Coordinates (NDC)
-  // float vertices[] = {
-  //     0.5f,  0.5f,  // top right
-  //     0.5f,  -0.5f, // bottom right
-  //     -0.5f, -0.5f, // bottom left
-  //     -0.5f, 0.5f,  // top left
-  // };
   float vertices[] = {
+      // Geometry          // Normals
       -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
       0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
       0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
@@ -86,10 +81,10 @@ static Renderer gRenderer;
       -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
 
       -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,
-      0.5f,  -0.5f, 0.5f, 0.0f,  0.0f,  1.0f,
+      0.5f,  -0.5f, 0.5f, 0.0f,  0.0f,   1.0f,
       0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
       0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-      -0.5f, 0.5f,  0.5f, 0.0f,  0.0f,  1.0f,
+      -0.5f, 0.5f,  0.5f, 0.0f,  0.0f,   1.0f,
       -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,
 
       -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,
@@ -122,7 +117,7 @@ static Renderer gRenderer;
   };
   Vec3 position = Vec3{60.0f, 40.f, 0.0f};
   Vec3 rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
-  Renderer_DrawTriangles(&gRenderer, vertices, 36, 6, position, rotation, 0xFF0000);
+  Renderer_DrawTriangles(&gRenderer, vertices, 36, 6, position, rotation);
 
   [view setNeedsDisplay:YES];
 }

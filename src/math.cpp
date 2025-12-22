@@ -1,15 +1,26 @@
 #include "math.h"
+#include <algorithm>
 #include <cmath>
 
 Mat4 Mat4_Create() {
-    Mat4 m4 = {
-        .data = {
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        }
-    };
+    Mat4 m4 = {.data = {
+                   1.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   1.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   1.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   1.0,
+               }};
 
     return m4;
 }
@@ -20,14 +31,24 @@ Mat4 Mat4_Translate(Mat4 mat4, Vec3 vec3) {
     float ty = vec3.y;
     float tz = vec3.z;
 
-    Mat4 result = {
-        .data = {
-            m[0] + m[12] * tx, m[1] + m[13] * tx, m[2] + m[14] * tx, m[3] + m[15] * tx,
-            m[4] + m[12] * ty, m[5] + m[13] * ty, m[6] + m[14] * ty, m[7] + m[15] * ty,
-            m[8] + m[12] * tz, m[9] + m[13] * tz, m[10] + m[14] * tz, m[11] + m[15] * tz,
-            m[12], m[13], m[14], m[15],
-        }
-    };
+    Mat4 result = {.data = {
+                       m[0] + m[12] * tx,
+                       m[1] + m[13] * tx,
+                       m[2] + m[14] * tx,
+                       m[3] + m[15] * tx,
+                       m[4] + m[12] * ty,
+                       m[5] + m[13] * ty,
+                       m[6] + m[14] * ty,
+                       m[7] + m[15] * ty,
+                       m[8] + m[12] * tz,
+                       m[9] + m[13] * tz,
+                       m[10] + m[14] * tz,
+                       m[11] + m[15] * tz,
+                       m[12],
+                       m[13],
+                       m[14],
+                       m[15],
+                   }};
 
     return result;
 }
@@ -38,32 +59,51 @@ Mat4 Mat4_Scale(Mat4 mat4, Vec3 vec3) {
     float sy = vec3.y;
     float sz = vec3.z;
 
-    Mat4 result = {
-        .data = {
-            m[0] * sx, m[1] * sx, m[2] * sx,  m[3] * sx,
-            m[4] * sy, m[5] * sy, m[6] * sy,  m[7] * sy,
-            m[8] * sz, m[9] * sz, m[10] * sz, m[11] * sz,
-            m[12],     m[13],     m[14],      m[15],
-        }
-    };
+    Mat4 result = {.data = {
+                       m[0] * sx,
+                       m[1] * sx,
+                       m[2] * sx,
+                       m[3] * sx,
+                       m[4] * sy,
+                       m[5] * sy,
+                       m[6] * sy,
+                       m[7] * sy,
+                       m[8] * sz,
+                       m[9] * sz,
+                       m[10] * sz,
+                       m[11] * sz,
+                       m[12],
+                       m[13],
+                       m[14],
+                       m[15],
+                   }};
 
     return result;
 }
-
 
 Mat4 Mat4_RotateX(Mat4 mat4, float deg) {
     float *m = mat4.data;
     float c = cos(DegToRadians(deg));
     float s = sin(DegToRadians(deg));
 
-    Mat4 result = {
-        .data = {
-            m[0], m[1], m[2], m[3],
-            m[4] * c - m[8] * s, m[5] * c - m[9] * s, m[6] * c - m[10] * s, m[7] * c - m[11] * s,
-            m[4] * s + m[8] * c, m[5] * s + m[9] * c, m[6] * s + m[10] * c, m[7] * s + m[11] * c,
-            m[12], m[13], m[14], m[15],
-        }
-    };
+    Mat4 result = {.data = {
+                       m[0],
+                       m[1],
+                       m[2],
+                       m[3],
+                       m[4] * c - m[8] * s,
+                       m[5] * c - m[9] * s,
+                       m[6] * c - m[10] * s,
+                       m[7] * c - m[11] * s,
+                       m[4] * s + m[8] * c,
+                       m[5] * s + m[9] * c,
+                       m[6] * s + m[10] * c,
+                       m[7] * s + m[11] * c,
+                       m[12],
+                       m[13],
+                       m[14],
+                       m[15],
+                   }};
 
     return result;
 }
@@ -73,14 +113,24 @@ Mat4 Mat4_RotateY(Mat4 mat4, float deg) {
     float c = cos(DegToRadians(deg));
     float s = sin(DegToRadians(deg));
 
-    Mat4 result = {
-        .data = {
-            m[0] * c + m[8] * s, m[1] * c + m[9] * s, m[2] * c + m[10] * s, m[3] * c + m[11] * s,
-            m[4], m[5], m[6], m[7],
-            -m[0] * s + m[8] * c, -m[1] * s + m[9] * c, -m[2] * s + m[10] * c, -m[3] * s + m[11] * c,
-            m[12], m[13], m[14], m[15],
-        }
-    };
+    Mat4 result = {.data = {
+                       m[0] * c + m[8] * s,
+                       m[1] * c + m[9] * s,
+                       m[2] * c + m[10] * s,
+                       m[3] * c + m[11] * s,
+                       m[4],
+                       m[5],
+                       m[6],
+                       m[7],
+                       -m[0] * s + m[8] * c,
+                       -m[1] * s + m[9] * c,
+                       -m[2] * s + m[10] * c,
+                       -m[3] * s + m[11] * c,
+                       m[12],
+                       m[13],
+                       m[14],
+                       m[15],
+                   }};
 
     return result;
 }
@@ -90,14 +140,24 @@ Mat4 Mat4_RotateZ(Mat4 mat4, float deg) {
     float c = cos(DegToRadians(deg));
     float s = sin(DegToRadians(deg));
 
-    Mat4 result = {
-        .data = {
-            m[0] * c - m[4] * s, m[1] * c - m[5] * s, m[2] * c - m[6] * s, m[3] * c - m[7] * s,
-            m[0] * s + m[4] * c, m[1] * s + m[5] * c, m[2] * s + m[6] * c, m[3] * s + m[7] * c,
-            m[8], m[9], m[10], m[11],
-            m[12], m[13], m[14], m[15],
-        }
-    };
+    Mat4 result = {.data = {
+                       m[0] * c - m[4] * s,
+                       m[1] * c - m[5] * s,
+                       m[2] * c - m[6] * s,
+                       m[3] * c - m[7] * s,
+                       m[0] * s + m[4] * c,
+                       m[1] * s + m[5] * c,
+                       m[2] * s + m[6] * c,
+                       m[3] * s + m[7] * c,
+                       m[8],
+                       m[9],
+                       m[10],
+                       m[11],
+                       m[12],
+                       m[13],
+                       m[14],
+                       m[15],
+                   }};
 
     return result;
 }
@@ -123,14 +183,13 @@ Mat4 Mat4_Perspective(float fovy, float aspect, float zNear, float zFar) {
 
     result.data[0] = 1 / (aspect * t);
     result.data[5] = 1 / t;
-    result.data[10] = -(zFar+zNear)/(zFar-zNear);
-    result.data[11] = -2*zFar*zNear/(zFar-zNear);
+    result.data[10] = -(zFar + zNear) / (zFar - zNear);
+    result.data[11] = -2 * zFar * zNear / (zFar - zNear);
     result.data[14] = -1;
     result.data[15] = 0.0f;
 
     return result;
 }
-
 
 // Orthographic projection matrix (OpenGL convention)
 // | 2/(r-l)     0        0      -(r+l)/(r-l) |
@@ -167,4 +226,23 @@ Vec4 Vec4_Transform(Vec4 vec4, Mat4 mat4) {
 
 float DegToRadians(float deg) {
     return deg * PI / 180.0f;
+}
+
+uint32_t ColorToInt(ColorRGBA color) {
+    u_int32_t red =
+        std::clamp(static_cast<int>(std::round(color.r * 255)), 0, 255);
+    u_int32_t green =
+        std::clamp(static_cast<int>(std::round(color.g * 255)), 0, 255);
+    u_int32_t blue =
+        std::clamp(static_cast<int>(std::round(color.b * 255)), 0, 255);
+
+    return (red << 16) | (green << 8) | blue;
+}
+
+ColorRGBA LerpRGB(ColorRGBA c1, ColorRGBA c2, float t) {
+    float r = c1.r + (c2.r - c1.r) * t;
+    float g = c1.g + (c2.g - c1.g) * t;
+    float b = c1.b + (c2.b - c1.b) * t;
+
+    return {r, g, b, 1.0f};
 }

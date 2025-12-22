@@ -5,9 +5,10 @@
 #include <cstdint>
 #include <vector>
 
-struct P2 {
+struct Pixel {
     int x;
     int y;
+    ColorRGBA color;
 };
 
 struct Renderer {
@@ -23,14 +24,13 @@ void Renderer_Destroy(Renderer *r);
 void Renderer_ClearBackground(Renderer *r, uint32_t color = 0xFF000000);
 void Renderer_SetPixel(Renderer *r, int x, int y, uint32_t color);
 void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
-                            Vec3 position, Vec3 rotation, uint32_t color);
-void Renderer_FillTriangle(Renderer *r, std::vector<P2> *points,
-                           uint32_t color);
-void Renderer_DrawLine(Renderer *r, std::vector<P2> *points, P2 p1, P2 p2,
-                       uint32_t color);
-void Renderer_DrawLineVertical(Renderer *r, std::vector<P2> *points, P2 p1,
-                               P2 p2, uint32_t color);
-void Renderer_DrawLineHorizontal(Renderer *r, std::vector<P2> *points, P2 p1,
-                                 P2 p2, uint32_t color);
+                            Vec3 position, Vec3 rotation);
+void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *points);
+void Renderer_DrawLine(Renderer *r, std::vector<Pixel> *points, Pixel p1,
+                       Pixel p2);
+void Renderer_DrawLineVertical(Renderer *r, std::vector<Pixel> *points,
+                               Pixel p1, Pixel p2);
+void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *points,
+                                 Pixel p1, Pixel p2);
 
 #endif
