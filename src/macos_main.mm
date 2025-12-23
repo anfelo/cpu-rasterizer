@@ -1,3 +1,4 @@
+#include "math.h"
 #include "renderer.h"
 #import <Cocoa/Cocoa.h>
 
@@ -70,54 +71,15 @@ static Renderer gRenderer;
 
   Renderer_ClearBackground(&gRenderer, 0xFF1a1a2e);
 
-  // Normalized Device Coordinates (NDC)
-  float vertices[] = {
-      // Geometry          // Normals
-      -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
-      0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
-      0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
-      0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
-      -0.5f, 0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
-      -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
-
-      -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,
-      0.5f,  -0.5f, 0.5f, 0.0f,  0.0f,   1.0f,
-      0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-      0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-      -0.5f, 0.5f,  0.5f, 0.0f,  0.0f,   1.0f,
-      -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,
-
-      -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,
-      -0.5f, 0.5f,  -0.5f, -1.0f, 0.0f,  0.0f,
-      -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,
-      -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,
-      -0.5f, -0.5f, 0.5f, -1.0f, 0.0f,  0.0f,
-      -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,
-
-      0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-      0.5f,  0.5f,  -0.5f, 1.0f,  0.0f,  0.0f,
-      0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
-      0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
-      0.5f,  -0.5f, 0.5f, 1.0f,  0.0f,  0.0f,
-      0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-      -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,
-      0.5f,  -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,
-      0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,
-      0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,
-      -0.5f, -0.5f, 0.5f, 0.0f,  -1.0f, 0.0f,
-      -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,
-
-      -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,
-      0.5f,  0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,
-      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-      -0.5f, 0.5f,  0.5f, 0.0f,  1.0f,  0.0f,
-      -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,
-  };
-  Vec3 position = Vec3{60.0f, 40.f, 0.0f};
+  Vec3 position = Vec3{0.0f, 0.0f, 0.0f};
   Vec3 rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
-  Renderer_DrawTriangles(&gRenderer, vertices, 36, 6, position, rotation);
+  ColorRGBA color = ColorRGBA{1.0f, 0.0f, 0.0f};
+  Renderer_DrawCube(&gRenderer, position, rotation, color);
+
+  position = Vec3{0.0f, 0.0f, 5.0f};
+  rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
+  color = ColorRGBA{0.0f, 0.0f, 1.0f};
+  Renderer_DrawCube(&gRenderer, position, rotation, color);
 
   [view setNeedsDisplay:YES];
 }
