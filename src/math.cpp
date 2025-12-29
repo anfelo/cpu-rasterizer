@@ -179,13 +179,13 @@ Mat4 Mat4_Rotate(Mat4 mat4, Vec3 vec3) {
 Mat4 Mat4_Perspective(float fovy, float aspect, float zNear, float zFar) {
     Mat4 result = Mat4_Create();
 
-    float t = tan(fovy / 2);
+    float t = tanf(fovy / 2.0f);
 
-    result.data[0] = 1 / (aspect * t);
-    result.data[5] = 1 / t;
+    result.data[0] = 1.0f / (aspect * t);
+    result.data[5] = 1.0f / t;
     result.data[10] = -(zFar + zNear) / (zFar - zNear);
-    result.data[11] = -2 * zFar * zNear / (zFar - zNear);
-    result.data[14] = -1;
+    result.data[11] = -1.0f;
+    result.data[14] = -2.0f * zFar * zNear / (zFar - zNear);
     result.data[15] = 0.0f;
 
     return result;
@@ -211,14 +211,95 @@ Mat4 Mat4_Ortho(float left, float right, float bottom, float top, float zNear,
     return result;
 }
 
+Mat4 Mat4_LookAt(Vec3 eye, Vec3 target, Vec3 up) {
+    Vec3 f = Vec3_Subtract(target, eye); // forward
+
+    // Guard against zero-length forward vector
+    if (Vec3_Mag(f) < 0.0001f) {
+        return Mat4_Create();
+    }
+    f = Vec3_Normalize(f);
+
+    Vec3 r = Vec3_Normalize(Vec3_Cross(f, up)); // right
+    Vec3 u = Vec3_Cross(r, f);                  // true up
+
+    Mat4 out;
+
+    // Column-major order (OpenGL convention)
+    out.data[0] = r.x;
+    out.data[1] = u.x;
+    out.data[2] = -f.x;
+    out.data[3] = 0.0f;
+
+    out.data[4] = r.y;
+    out.data[5] = u.y;
+    out.data[6] = -f.y;
+    out.data[7] = 0.0f;
+
+    out.data[8] = r.z;
+    out.data[9] = u.z;
+    out.data[10] = -f.z;
+    out.data[11] = 0.0f;
+
+    out.data[12] = -Vec3_Dot(r, eye);
+    out.data[13] = -Vec3_Dot(u, eye);
+    out.data[14] = Vec3_Dot(f, eye);
+    out.data[15] = 1.0f;
+
+    return out;
+}
+
+float Vec3_Mag(Vec3 vec3) {
+    return sqrtf(vec3.x * vec3.x + vec3.y * vec3.y + vec3.z * vec3.z);
+}
+
+Vec3 Vec3_ScalarMult(Vec3 vec3, float value) {
+    return {vec3.x * value, vec3.y * value, vec3.z * value};
+}
+
+Vec3 Vec3_ScalarDivide(Vec3 vec3, float value) {
+    return {vec3.x / value, vec3.y / value, vec3.z / value};
+}
+
+Vec3 Vec3_Mult(Vec3 a, Vec3 b) {
+    return {a.x * b.x, a.y * b.y, a.z * b.z};
+}
+
+Vec3 Vec3_Subtract(Vec3 a, Vec3 b) {
+    return {a.x - b.x, a.y - b.y, a.z - b.z};
+}
+
+Vec3 Vec3_Add(Vec3 a, Vec3 b) {
+    return {a.x + b.x, a.y + b.y, a.z + b.z};
+}
+
+Vec3 Vec3_Normalize(Vec3 vec3) {
+    float mag = Vec3_Mag(vec3);
+
+    if (mag == 0.0f) {
+        return vec3;
+    }
+
+    return Vec3_ScalarDivide(vec3, mag);
+}
+
+float Vec3_Dot(Vec3 a, Vec3 b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+Vec3 Vec3_Cross(Vec3 a, Vec3 b) {
+    return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z,
+            a.x * b.y - a.y * b.x};
+}
+
 Vec4 Vec4_Transform(Vec4 vec4, Mat4 mat4) {
     float *m = mat4.data;
 
     Vec4 result = {
-        vec4.x * m[0] + vec4.y * m[1] + vec4.z * m[2] + vec4.w * m[3],
-        vec4.x * m[4] + vec4.y * m[5] + vec4.z * m[6] + vec4.w * m[7],
-        vec4.x * m[8] + vec4.y * m[9] + vec4.z * m[10] + vec4.w * m[11],
-        vec4.x * m[12] + vec4.y * m[13] + vec4.z * m[14] + vec4.w * m[15],
+        vec4.x * m[0] + vec4.y * m[4] + vec4.z * m[8] + vec4.w * m[12],
+        vec4.x * m[1] + vec4.y * m[5] + vec4.z * m[9] + vec4.w * m[13],
+        vec4.x * m[2] + vec4.y * m[6] + vec4.z * m[10] + vec4.w * m[14],
+        vec4.x * m[3] + vec4.y * m[7] + vec4.z * m[11] + vec4.w * m[15],
     };
 
     return result;

@@ -44,6 +44,17 @@ Mat4 Mat4_RotateZ(Mat4 mat4, float deg);
 Mat4 Mat4_Perspective(float fovy, float aspect, float zNear, float zFar);
 Mat4 Mat4_Ortho(float left, float right, float bottom, float top, float zNear,
                 float zFar);
+Mat4 Mat4_LookAt(Vec3 eye, Vec3 target, Vec3 up);
+
+Vec3 Vec3_ScalarMult(Vec3 vec3, float value);
+Vec3 Vec3_ScalarDivide(Vec3 vec3, float value);
+Vec3 Vec3_Normalize(Vec3 vec3);
+Vec3 Vec3_Subtract(Vec3 a, Vec3 b);
+Vec3 Vec3_Add(Vec3 a, Vec3 b);
+Vec3 Vec3_Mult(Vec3 a, Vec3 b);
+float Vec3_Mag(Vec3 vec3);
+float Vec3_Dot(Vec3 a, Vec3 b);
+Vec3 Vec3_Cross(Vec3 a, Vec3 b);
 
 Vec4 Vec4_Transform(Vec4 vec4, Mat4 mat4);
 
