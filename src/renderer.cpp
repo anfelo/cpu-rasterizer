@@ -201,10 +201,12 @@ void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *points) {
             for (int x = p1.x; x <= p2.x; ++x) {
                 ColorRGBA colorRGB = LerpRGB(p1.color, p2.color,
                                              (float)(x - p1.x) / (p2.x - p1.x));
+                float depth = LerpFloat(p1.depth, p2.depth,
+                                        (float)(x - p1.x) / (p2.x - p1.x));
 
                 Vec3 pNorm = {p1.normal.x, p1.normal.y, p1.normal.z};
-                Pixel p = {x, p1.y, p1.depth, colorRGB, pNorm};
-                colorRGB = CalculatePixelLighting(p);
+                Pixel p = {x, p1.y, depth, colorRGB, pNorm};
+                colorRGB = Renderer_CalculatePixelLighting(r, p);
 
                 Renderer_SetPixel(r, p.x, p.y, p.depth, ColorToInt(colorRGB));
 
@@ -216,10 +218,12 @@ void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *points) {
             for (int x = p2.x; x <= p1.x; ++x) {
                 ColorRGBA colorRGB = LerpRGB(p2.color, p1.color,
                                              (float)(x - p2.x) / (p1.x - p2.x));
+                float depth = LerpFloat(p2.depth, p1.depth,
+                                        (float)(x - p2.x) / (p1.x - p2.x));
 
                 Vec3 pNorm = {p1.normal.x, p1.normal.y, p1.normal.z};
-                Pixel p = {x, p2.y, p2.depth, colorRGB, pNorm};
-                colorRGB = CalculatePixelLighting(p);
+                Pixel p = {x, p2.y, depth, colorRGB, pNorm};
+                colorRGB = Renderer_CalculatePixelLighting(r, p);
 
                 Renderer_SetPixel(r, p.x, p.y, p.depth, ColorToInt(colorRGB));
 
@@ -275,12 +279,13 @@ void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *points,
     for (int x = p1.x; x <= p2.x; ++x) {
         ColorRGBA colorRGB =
             LerpRGB(p1.color, p2.color, (float)(x - p1.x) / dx);
+        float depth = LerpFloat(p1.depth, p2.depth, (float)(x - p1.x) / dx);
 
         // INFO: For now we deal with flat faces so we keep the same normal as
         // one of the points. Maybe I need to interpolate the vectors?
         Vec3 pNorm = {p1.normal.x, p1.normal.y, p1.normal.z};
 
-        points->push_back(Pixel{x, y, p1.depth, colorRGB, pNorm});
+        points->push_back(Pixel{x, y, depth, colorRGB, pNorm});
 
         if (d > 0) {
             y += yi;
@@ -312,12 +317,13 @@ void Renderer_DrawLineVertical(Renderer *r, std::vector<Pixel> *points,
     for (int y = p1.y; y <= p2.y; ++y) {
         ColorRGBA colorRGB =
             LerpRGB(p1.color, p2.color, (float)(y - p1.y) / dy);
+        float depth = LerpFloat(p1.depth, p2.depth, (float)(y - p1.y) / dy);
 
         // INFO: For now we deal with flat faces so we keep the same normal as
         // one of the points. Maybe I need to interpolate the vectors?
         Vec3 pNorm = {p1.normal.x, p1.normal.y, p1.normal.z};
 
-        points->push_back(Pixel{x, y, p1.depth, colorRGB, pNorm});
+        points->push_back(Pixel{x, y, depth, colorRGB, pNorm});
 
         if (d > 0) {
             x += xi;
@@ -328,7 +334,7 @@ void Renderer_DrawLineVertical(Renderer *r, std::vector<Pixel> *points,
     }
 }
 
-ColorRGBA CalculatePixelLighting(Pixel pixel) {
+ColorRGBA Renderer_CalculatePixelLighting(Renderer *r, Pixel pixel) {
     // Ambient
     float ambientStrength = 0.1f;
     Vec3 lightColor = {1.0f, 1.0f, 1.0f};
@@ -337,7 +343,7 @@ ColorRGBA CalculatePixelLighting(Pixel pixel) {
     Vec3 pixelPos = {(float)pixel.x, (float)pixel.y, pixel.depth};
 
     // Diffuse
-    Vec3 lightPos = {100.0f, 100.0f, 10.0f};
+    Vec3 lightPos = {80.0f, 80.0f, 50.0f};
     Vec3 norm = Vec3_Normalize(pixel.normal);
     Vec3 lightDir = Vec3_Normalize(Vec3_Subtract(lightPos, pixelPos));
     float dp = Vec3_Dot(norm, lightDir);
@@ -345,13 +351,14 @@ ColorRGBA CalculatePixelLighting(Pixel pixel) {
     Vec3 diffuse = Vec3_ScalarMult(lightColor, diff);
 
     // Specular
-    // float specular_strength = u_specular_strength;
-    // vec3 view_dir = normalize(u_view_pos - FragPos);
-    // vec3 reflect_dir = reflect(-light_dir, norm);
-    // float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);
-    // vec3 specular = specular_strength * spec * u_light_color;
+    float specularStrength = 0.5f;
+    Vec3 viewDir = Vec3_Normalize(Vec3_Subtract(r->camera.position, pixelPos));
+    Vec3 reflectDir = Vec3_Reflect(Vec3_ScalarMult(lightDir, -1), norm);
+    float spec = powf(fmaxf(Vec3_Dot(viewDir, reflectDir), 0.0), 32);
+    Vec3 specular = Vec3_ScalarMult(lightColor, specularStrength * spec);
 
     Vec3 lighting = Vec3_Add(ambient, diffuse);
+    lighting = Vec3_Add(lighting, specular);
 
     return {
         pixel.color.r * lighting.x,

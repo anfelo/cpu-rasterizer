@@ -292,6 +292,13 @@ Vec3 Vec3_Cross(Vec3 a, Vec3 b) {
             a.x * b.y - a.y * b.x};
 }
 
+Vec3 Vec3_Reflect(Vec3 incident, Vec3 normal) {
+    float d = Vec3_Dot(normal, incident);
+    return (Vec3){incident.x - 2.0f * d * normal.x,
+                  incident.y - 2.0f * d * normal.y,
+                  incident.z - 2.0f * d * normal.z};
+}
+
 Vec4 Vec4_Transform(Vec4 vec4, Mat4 mat4) {
     float *m = mat4.data;
 
@@ -326,4 +333,10 @@ ColorRGBA LerpRGB(ColorRGBA c1, ColorRGBA c2, float t) {
     float b = c1.b + (c2.b - c1.b) * t;
 
     return {r, g, b, 1.0f};
+}
+
+float LerpFloat(float f1, float f2, float t) {
+    float r = f1 + (f2 - f1) * t;
+
+    return r;
 }

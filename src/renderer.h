@@ -57,7 +57,7 @@ void Renderer_DrawLineVertical(Renderer *r, std::vector<Pixel> *points,
 void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *points,
                                  Pixel p1, Pixel p2);
 
-ColorRGBA CalculatePixelLighting(Pixel pixel);
+ColorRGBA Renderer_CalculatePixelLighting(Renderer *r, Pixel pixel);
 
 CubeMesh CreateCubeMesh();
 QuadMesh CreateQuadMesh();

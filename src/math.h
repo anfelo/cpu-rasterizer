@@ -55,6 +55,7 @@ Vec3 Vec3_Mult(Vec3 a, Vec3 b);
 float Vec3_Mag(Vec3 vec3);
 float Vec3_Dot(Vec3 a, Vec3 b);
 Vec3 Vec3_Cross(Vec3 a, Vec3 b);
+Vec3 Vec3_Reflect(Vec3 incident, Vec3 normal);
 
 Vec4 Vec4_Transform(Vec4 vec4, Mat4 mat4);
 
@@ -62,5 +63,6 @@ float DegToRadians(float deg);
 
 uint32_t ColorToInt(ColorRGBA color);
 ColorRGBA LerpRGB(ColorRGBA c1, ColorRGBA c2, float t);
+float LerpFloat(float f1, float f2, float t);
 
 #endif
