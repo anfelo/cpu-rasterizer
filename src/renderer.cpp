@@ -106,6 +106,8 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
     model = Mat4_Scale(model, scale);
     model = Mat4_Translate(model, position);
 
+    std::vector<Pixel> pixels;
+
     // Vertices are in local space
     for (int i = 0; i < length * size; i += size) {
         Vec4 v = {vertices[i], vertices[i + 1], vertices[i + 2], 1.0f};
@@ -116,13 +118,14 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
         // View -> Clip (Projection)
         v = Vec4_Transform(v, projection);
 
-        if (v.w <= 0.0f) {
-            // Offscreen marker
-            vertices[i] = -1.0f;
-            vertices[i + 1] = -1.0f;
-            vertices[i + 2] = -1.0f;
-            continue;
-        }
+        // TODO: Handle the offscreen vertices later on the draw call
+        // if (v.w <= 0.0f) {
+        //     // Offscreen marker
+        //     vertices[i] = -1.0f;
+        //     vertices[i + 1] = -1.0f;
+        //     vertices[i + 2] = -1.0f;
+        //     continue;
+        // }
 
         // Clip space
         vertices[i] = v.x;
@@ -142,11 +145,9 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
 
     // TODO: Discard any vertices that are outside of the clip space
 
-    std::vector<Pixel> edge_points;
-
     // Rendering
     for (int i = 0; i < length * size; i += (size * 3)) {
-        edge_points.clear();
+        pixels.clear();
 
         int p1i = i;
         int p2i = i + size;
@@ -168,26 +169,26 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
                     vertices[p3i + 2], p3Color, p3Norm};
 
         // Generate all the pixels (fragments)
-        Renderer_DrawLine(r, &edge_points, p1, p2);
-        Renderer_DrawLine(r, &edge_points, p1, p3);
-        Renderer_DrawLine(r, &edge_points, p2, p3);
+        Renderer_DrawLine(r, &pixels, p1, p2);
+        Renderer_DrawLine(r, &pixels, p1, p3);
+        Renderer_DrawLine(r, &pixels, p2, p3);
 
-        Renderer_FillTriangle(r, &edge_points);
+        Renderer_FillTriangle(r, &pixels);
     }
 }
 
-void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *points) {
+void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *pixels) {
     if (r == nullptr) {
         return;
     }
 
     // Sort by y component
-    std::sort(points->begin(), points->end(),
+    std::sort(pixels->begin(), pixels->end(),
               [](const Pixel &a, const Pixel &b) { return a.y < b.y; });
 
-    for (size_t i = 0; i < points->size() - 1; ++i) {
-        Pixel p1 = points->at(i);
-        Pixel p2 = points->at(i + 1);
+    for (size_t i = 0; i < pixels->size() - 1; ++i) {
+        Pixel p1 = pixels->at(i);
+        Pixel p2 = pixels->at(i + 1);
 
         if (p1.y != p2.y) {
             continue;
@@ -206,12 +207,12 @@ void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *points) {
 
                 Vec3 pNorm = {p1.normal.x, p1.normal.y, p1.normal.z};
                 Pixel p = {x, p1.y, depth, colorRGB, pNorm};
-                colorRGB = Renderer_CalculatePixelLighting(r, p);
+                // colorRGB = Renderer_CalculatePixelLighting(r, p);
 
                 Renderer_SetPixel(r, p.x, p.y, p.depth, ColorToInt(colorRGB));
 
                 if (x != p1.x && x != p2.x) {
-                    points->push_back(p);
+                    pixels->push_back(p);
                 }
             }
         } else {
@@ -223,12 +224,12 @@ void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *points) {
 
                 Vec3 pNorm = {p1.normal.x, p1.normal.y, p1.normal.z};
                 Pixel p = {x, p2.y, depth, colorRGB, pNorm};
-                colorRGB = Renderer_CalculatePixelLighting(r, p);
+                // colorRGB = Renderer_CalculatePixelLighting(r, p);
 
                 Renderer_SetPixel(r, p.x, p.y, p.depth, ColorToInt(colorRGB));
 
                 if (x != p1.x && x != p2.x) {
-                    points->push_back(p);
+                    pixels->push_back(p);
                 }
             }
         }
@@ -237,7 +238,7 @@ void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *points) {
 
 // Bresenham's Line algorithm
 // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-void Renderer_DrawLine(Renderer *r, std::vector<Pixel> *points, Pixel p1,
+void Renderer_DrawLine(Renderer *r, std::vector<Pixel> *pixels, Pixel p1,
                        Pixel p2) {
     if (r == nullptr) {
         return;
@@ -245,20 +246,20 @@ void Renderer_DrawLine(Renderer *r, std::vector<Pixel> *points, Pixel p1,
 
     if (abs(p2.y - p1.y) < abs(p2.x - p1.x)) {
         if (p1.x > p2.x) {
-            Renderer_DrawLineHorizontal(r, points, p2, p1);
+            Renderer_DrawLineHorizontal(r, pixels, p2, p1);
         } else {
-            Renderer_DrawLineHorizontal(r, points, p1, p2);
+            Renderer_DrawLineHorizontal(r, pixels, p1, p2);
         }
     } else {
         if (p1.y > p2.y) {
-            Renderer_DrawLineVertical(r, points, p2, p1);
+            Renderer_DrawLineVertical(r, pixels, p2, p1);
         } else {
-            Renderer_DrawLineVertical(r, points, p1, p2);
+            Renderer_DrawLineVertical(r, pixels, p1, p2);
         }
     }
 }
 
-void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *points,
+void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *pixels,
                                  Pixel p1, Pixel p2) {
     if (r == nullptr) {
         return;
@@ -285,7 +286,7 @@ void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *points,
         // one of the points. Maybe I need to interpolate the vectors?
         Vec3 pNorm = {p1.normal.x, p1.normal.y, p1.normal.z};
 
-        points->push_back(Pixel{x, y, depth, colorRGB, pNorm});
+        pixels->push_back(Pixel{x, y, depth, colorRGB, pNorm});
 
         if (d > 0) {
             y += yi;

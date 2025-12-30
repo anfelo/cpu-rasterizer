@@ -199,8 +199,8 @@ static struct {
   Renderer_ClearBackground(&gRenderer, 0x101010);
 
   Vec3 position = Vec3{0.0f, 0.0f, 0.0f};
-  // Vec3 rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
   Vec3 rotation = Vec3{0.0f, 0.0f, 0.0f};
+  // Vec3 rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
   Vec3 scale = Vec3{1.0f, 1.0f, 1.0f};
   ColorRGBA color = ColorRGBA{1.0f, 0.5f, 0.31f};
   Renderer_DrawCube(&gRenderer, position, rotation, scale, color);

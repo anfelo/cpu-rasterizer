@@ -49,12 +49,12 @@ void Renderer_DrawCube(Renderer *r, Vec3 position, Vec3 rotation, Vec3 scale,
 void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
                             Vec3 position, Vec3 rotation, Vec3 scale,
                             ColorRGBA color);
-void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *points);
-void Renderer_DrawLine(Renderer *r, std::vector<Pixel> *points, Pixel p1,
+void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *pixels);
+void Renderer_DrawLine(Renderer *r, std::vector<Pixel> *pixels, Pixel p1,
                        Pixel p2);
-void Renderer_DrawLineVertical(Renderer *r, std::vector<Pixel> *points,
+void Renderer_DrawLineVertical(Renderer *r, std::vector<Pixel> *pixels,
                                Pixel p1, Pixel p2);
-void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *points,
+void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *pixels,
                                  Pixel p1, Pixel p2);
 
 ColorRGBA Renderer_CalculatePixelLighting(Renderer *r, Pixel pixel);
