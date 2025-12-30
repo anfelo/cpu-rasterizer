@@ -93,6 +93,9 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
         return;
     }
 
+    float halfWidth = (float)r->width / 2;
+    float halfHeight = (float)r->height / 2;
+
     // Transformations
     Mat4 view = Camera_GetViewMatrix(&r->camera);
     // Mat4 view = Mat4_Create();
@@ -109,14 +112,31 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
     std::vector<Pixel> pixels;
 
     // Vertices are in local space
-    for (int i = 0; i < length * size; i += size) {
-        Vec4 v = {vertices[i], vertices[i + 1], vertices[i + 2], 1.0f};
+    for (int i = 0; i < length * size; i += (size * 3)) {
+        pixels.clear();
+
+        int v1i = i;
+        int v2i = i + size;
+        int v3i = i + (size * 2);
+
+        Vec4 v1 = {vertices[v1i], vertices[v1i + 1], vertices[v1i + 2], 1.0f};
+        Vec4 v2 = {vertices[v2i], vertices[v2i + 1], vertices[v2i + 2], 1.0f};
+        Vec4 v3 = {vertices[v3i], vertices[v3i + 1], vertices[v3i + 2], 1.0f};
+
         // Model -> World
-        v = Vec4_Transform(v, model);
+        v1 = Vec4_Transform(v1, model);
+        v2 = Vec4_Transform(v2, model);
+        v3 = Vec4_Transform(v3, model);
+
         // World -> View
-        v = Vec4_Transform(v, view);
+        v1 = Vec4_Transform(v1, view);
+        v2 = Vec4_Transform(v2, view);
+        v3 = Vec4_Transform(v3, view);
+
         // View -> Clip (Projection)
-        v = Vec4_Transform(v, projection);
+        v1 = Vec4_Transform(v1, projection);
+        v2 = Vec4_Transform(v2, projection);
+        v3 = Vec4_Transform(v3, projection);
 
         // TODO: Handle the offscreen vertices later on the draw call
         // if (v.w <= 0.0f) {
@@ -127,46 +147,44 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
         //     continue;
         // }
 
-        // Clip space
-        vertices[i] = v.x;
-        vertices[i + 1] = v.y;
-        vertices[i + 2] = v.z;
-
         // Clip -> NDC (Perspective Divide)
-        vertices[i] = vertices[i] / v.w;
-        vertices[i + 1] = vertices[i + 1] / v.w;
-        vertices[i + 2] = vertices[i + 2] / v.w;
+        v1.x = v1.x / v1.w;
+        v1.y = v1.y / v1.w;
+        v1.z = v1.z / v1.w;
+
+        v2.x = v2.x / v2.w;
+        v2.y = v2.y / v2.w;
+        v2.z = v2.z / v2.w;
+
+        v3.x = v3.x / v3.w;
+        v3.y = v3.y / v3.w;
+        v3.z = v3.z / v3.w;
 
         // NDC -> Screen
-        vertices[i] = ((float)r->width / 2) * (vertices[i] + 1.0f);
-        vertices[i + 1] = ((float)r->height / 2) * (1.0f - vertices[i + 1]);
-        vertices[i + 2] = (vertices[i + 2] + 1.0f) * 0.5;
-    }
+        v1.x = halfWidth * (v1.x + 1.0f);
+        v1.y = halfHeight * (1.0f - v1.y);
+        v1.z = (v1.z + 1.0f) * 0.5;
 
-    // TODO: Discard any vertices that are outside of the clip space
+        v2.x = halfWidth * (v2.x + 1.0f);
+        v2.y = halfHeight * (1.0f - v2.y);
+        v2.z = (v2.z + 1.0f) * 0.5;
 
-    // Rendering
-    for (int i = 0; i < length * size; i += (size * 3)) {
-        pixels.clear();
+        v3.x = halfWidth * (v3.x + 1.0f);
+        v3.y = halfHeight * (1.0f - v3.y);
+        v3.z = (v3.z + 1.0f) * 0.5;
 
-        int p1i = i;
-        int p2i = i + size;
-        int p3i = i + (size * 2);
-
+        // Rendering
         ColorRGBA p1Color = color;
         ColorRGBA p2Color = color;
         ColorRGBA p3Color = color;
 
-        Vec3 p1Norm = {vertices[p1i + 3], vertices[p1i + 4], vertices[p1i + 5]};
-        Vec3 p2Norm = {vertices[p2i + 3], vertices[p2i + 4], vertices[p2i + 5]};
-        Vec3 p3Norm = {vertices[p2i + 3], vertices[p3i + 4], vertices[p3i + 5]};
+        Vec3 p1Norm = {vertices[v1i + 3], vertices[v1i + 4], vertices[v1i + 5]};
+        Vec3 p2Norm = {vertices[v2i + 3], vertices[v2i + 4], vertices[v2i + 5]};
+        Vec3 p3Norm = {vertices[v3i + 3], vertices[v3i + 4], vertices[v3i + 5]};
 
-        Pixel p1 = {(int)vertices[p1i], (int)vertices[p1i + 1],
-                    vertices[p1i + 2], p1Color, p1Norm};
-        Pixel p2 = {(int)vertices[p2i], (int)vertices[p2i + 1],
-                    vertices[p2i + 2], p2Color, p2Norm};
-        Pixel p3 = {(int)vertices[p3i], (int)vertices[p3i + 1],
-                    vertices[p3i + 2], p3Color, p3Norm};
+        Pixel p1 = {(int)v1.x, (int)v1.y, v1.z, p1Color, p1Norm};
+        Pixel p2 = {(int)v2.x, (int)v2.y, v2.z, p2Color, p2Norm};
+        Pixel p3 = {(int)v3.x, (int)v3.y, v3.z, p3Color, p3Norm};
 
         // Generate all the pixels (fragments)
         Renderer_DrawLine(r, &pixels, p1, p2);
