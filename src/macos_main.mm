@@ -2,6 +2,19 @@
 #include "math.h"
 #include "renderer.h"
 #import <Cocoa/Cocoa.h>
+#include <mach/mach_time.h>
+
+static double frameTimes[60];
+static int frameIndex = 0;
+// Call once at startup to get the conversion factor
+static mach_timebase_info_data_t timebaseInfo;
+static void InitTiming() { mach_timebase_info(&timebaseInfo); }
+
+// Returns elapsed time in milliseconds
+static double GetElapsedMs(uint64_t start, uint64_t end) {
+  uint64_t elapsed = end - start;
+  return (double)elapsed * timebaseInfo.numer / timebaseInfo.denom / 1e6;
+}
 
 static Renderer gRenderer;
 
@@ -125,6 +138,8 @@ static struct {
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
+  InitTiming();
+
   // Internal Resolution: scaled 4x to 800x600
   const int w = 200, h = 150, pixelSize = 4;
 
@@ -171,10 +186,14 @@ static struct {
   if (keyState.d) {
     Camera_ProcessKeyboard(&gRenderer.camera, RIGHT, deltaTime);
   }
-  if (keyState.space)
+  if (keyState.space) {
     gRenderer.camera.position.y += deltaTime * 2.5f; // Move up
-  if (keyState.shift)
+  }
+  if (keyState.shift) {
     gRenderer.camera.position.y -= deltaTime * 2.5f; // Move down
+  }
+
+  uint64_t start = mach_absolute_time();
 
   // Renderer
   Renderer_ClearBackground(&gRenderer, 0x101010);
@@ -186,17 +205,18 @@ static struct {
   ColorRGBA color = ColorRGBA{1.0f, 0.5f, 0.31f};
   Renderer_DrawCube(&gRenderer, position, rotation, scale, color);
 
-  // Floor
-  // position = Vec3{0.0f, 0.0f, 0.0f};
-  // rotation = Vec3{0.0f, 0.0, 0.0f};
-  // scale = Vec3{3.0f, 3.0f, 0.0f};
-  // color = ColorRGBA{0.3f, 0.3f, 0.3f};
-  // Renderer_DrawQuad(&gRenderer, position, rotation, scale, color);
+  uint64_t end = mach_absolute_time();
 
-  // position = Vec3{1.0f, 0.0f, -2.0f};
-  // rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
-  // color = ColorRGBA{0.0f, 0.0f, 1.0f};
-  // Renderer_DrawCube(&gRenderer, position, rotation, color);
+  frameTimes[frameIndex] = GetElapsedMs(start, end);
+  frameIndex = (frameIndex + 1) % 60;
+
+  if (frameIndex == 0) {
+    double avg = 0;
+    for (int i = 0; i < 60; i++)
+      avg += frameTimes[i];
+    avg /= 60.0;
+    printf("Avg render: %.3f ms (%.1f FPS)\n", avg, 1000.0 / avg);
+  }
 
   [view setNeedsDisplay:YES];
 }
