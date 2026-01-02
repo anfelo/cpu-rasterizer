@@ -26,6 +26,25 @@ struct Pixel {
     Vec3 normal;
 };
 
+struct Fragment {
+    Vec2 coords;
+    Vec3 normal;
+    float z;
+    ColorRGBA color;
+};
+
+struct Vertex {
+    Vec3 coords;
+    Vec3 normal;
+    ColorRGBA color;
+};
+
+struct Triangle {
+    Vertex v0, v1, v2;
+    Vec2 min, max;
+    float area;
+};
+
 struct Renderer {
     bool ready;
     uint32_t *pixels;
@@ -58,6 +77,7 @@ void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *pixels,
                                  Pixel p1, Pixel p2);
 
 ColorRGBA Renderer_CalculatePixelLighting(Renderer *r, Pixel pixel);
+ColorRGBA Renderer_CalculateFragmentLighting(Renderer *r, Fragment frag);
 
 CubeMesh CreateCubeMesh();
 QuadMesh CreateQuadMesh();

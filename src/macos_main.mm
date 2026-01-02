@@ -141,11 +141,12 @@ static struct {
   InitTiming();
 
   // Internal Resolution: scaled 4x to 800x600
+  // const int w = 800, h = 600, pixelSize = 1;
   const int w = 200, h = 150, pixelSize = 4;
 
   gRenderer = Renderer_Create(w, h, pixelSize);
   gRenderer.camera =
-      Camera_Create(Vec3{0.0f, 0.0f, 3.0f}, Vec3{0.0f, 1.0f, 0.0f}, YAW, PITCH);
+      Camera_Create(Vec3{0.0f, 0.0f, 2.0f}, Vec3{0.0f, 1.0f, 0.0f}, YAW, PITCH);
 
   NSRect frame =
       NSMakeRect(100, 100, gRenderer.windowWidth, gRenderer.windowHeight);

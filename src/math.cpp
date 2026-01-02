@@ -317,14 +317,11 @@ float DegToRadians(float deg) {
 }
 
 uint32_t ColorToInt(ColorRGBA color) {
-    u_int32_t red =
-        std::clamp(static_cast<int>(std::round(color.r * 255)), 0, 255);
-    u_int32_t green =
-        std::clamp(static_cast<int>(std::round(color.g * 255)), 0, 255);
-    u_int32_t blue =
-        std::clamp(static_cast<int>(std::round(color.b * 255)), 0, 255);
+    uint8_t red = static_cast<uint8_t>(std::min(color.r * 255.0f, 255.0f));
+    uint8_t green = static_cast<uint8_t>(std::min(color.g * 255.0f, 255.0f));
+    uint8_t blue = static_cast<uint8_t>(std::min(color.b * 255.0f, 255.0f));
 
-    return (red << 16) | (green << 8) | blue;
+    return (0xFF << 24) | (red << 16) | (green << 8) | blue;
 }
 
 ColorRGBA LerpRGB(ColorRGBA c1, ColorRGBA c2, float t) {

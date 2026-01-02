@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
+#include <thread>
 #include <vector>
 
 Renderer Renderer_Create(int w, int h, int pixelScale) {
@@ -37,8 +38,7 @@ void Renderer_ClearBackground(Renderer *r, uint32_t color) {
 
     for (int i = 0; i < r->width * r->height; i++) {
         r->pixels[i] = color;
-        // Some far value that acts as a reset
-        r->zBuffer[i] = 1.0f;
+        r->zBuffer[i] = std::numeric_limits<float>::infinity();
     }
 }
 
@@ -82,17 +82,176 @@ void Renderer_DrawQuad(Renderer *r, Vec3 position, Vec3 rotation, Vec3 scale,
                            position, rotation, scale, color);
 }
 
+bool TriangleIntersectsTile(Triangle triangle, int tileX0, int tileY0,
+                            int tileX1, int tileY1) {
+    return !(triangle.max.x < tileX0 || triangle.min.x > tileX1 ||
+             triangle.max.y < tileY0 || triangle.min.y > tileY1);
+}
+
+float TriangleEdgeFunction(Vec3 a, Vec3 b, Vec2 p) {
+    return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+}
+
+Fragment TriangleInterpolatePoint(Triangle triangle, float b0, float b1,
+                                  float b2) {
+    Fragment frag;
+
+    // Perspective-correct interpolation
+    float invZ0 = 1.0f / triangle.v0.coords.z;
+    float invZ1 = 1.0f / triangle.v1.coords.z;
+    float invZ2 = 1.0f / triangle.v2.coords.z;
+
+    float invZ = b0 * invZ0 + b1 * invZ1 + b2 * invZ2;
+    float z = 1.0f / invZ;
+
+    // Frag Depth
+    frag.z = z;
+
+    // Frag Color
+    frag.color.r =
+        (b0 * triangle.v0.color.r * invZ0 + b1 * triangle.v1.color.r * invZ1 +
+         b2 * triangle.v2.color.r * invZ2) *
+        z;
+    frag.color.g =
+        (b0 * triangle.v0.color.g * invZ0 + b1 * triangle.v1.color.g * invZ1 +
+         b2 * triangle.v2.color.g * invZ2) *
+        z;
+    frag.color.b =
+        (b0 * triangle.v0.color.b * invZ0 + b1 * triangle.v1.color.b * invZ1 +
+         b2 * triangle.v2.color.b * invZ2) *
+        z;
+
+    // Frag Normals
+    frag.normal.x =
+        (b0 * triangle.v0.normal.x * invZ0 + b1 * triangle.v1.normal.x * invZ1 +
+         b2 * triangle.v2.normal.x * invZ2) *
+        z;
+    frag.normal.y =
+        (b0 * triangle.v0.normal.y * invZ0 + b1 * triangle.v1.normal.y * invZ1 +
+         b2 * triangle.v2.normal.y * invZ2) *
+        z;
+    frag.normal.z =
+        (b0 * triangle.v0.normal.z * invZ0 + b1 * triangle.v1.normal.z * invZ1 +
+         b2 * triangle.v2.normal.z * invZ2) *
+        z;
+
+    frag.normal = Vec3_Normalize(frag.normal);
+
+    return frag;
+}
+
+void Renderer_RasterizeTile(Renderer *r, const std::vector<Triangle> &triangles,
+                            int tileX, int tileY, int tileSize) {
+    int x0 = tileX * tileSize;
+    int y0 = tileY * tileSize;
+    int x1 = std::min(x0 + tileSize, r->width);
+    int y1 = std::min(y0 + tileSize, r->height);
+
+    for (const auto &triangle : triangles) {
+        // Triangle area (for barycentric coordinates)
+        // Skip degenerate triangles
+        if (std::abs(triangle.area) < 0.0001f) {
+            return;
+        }
+
+        // Determine winding
+        bool clockwise = triangle.area < 0;
+        float invArea = 1.0f / triangle.area;
+
+        if (!TriangleIntersectsTile(triangle, x0, y0, x1, y1)) {
+            continue;
+        }
+
+        // Rasterize only within tile bounds
+        for (int y = y0; y < y1; y++) {
+            for (int x = x0; x < x1; x++) {
+                Vec2 p = {x + 0.5f, y + 0.5f};
+
+                float w0 = TriangleEdgeFunction(triangle.v1.coords,
+                                                triangle.v2.coords, p);
+                float w1 = TriangleEdgeFunction(triangle.v2.coords,
+                                                triangle.v0.coords, p);
+                float w2 = TriangleEdgeFunction(triangle.v0.coords,
+                                                triangle.v1.coords, p);
+
+                // Check inside based on winding
+                bool inside = clockwise ? (w0 <= 0 && w1 <= 0 && w2 <= 0)
+                                        : (w0 >= 0 && w1 >= 0 && w2 >= 0);
+
+                if (inside) {
+                    float b0 = w0 * invArea;
+                    float b1 = w1 * invArea;
+                    float b2 = w2 * invArea;
+
+                    Fragment frag =
+                        TriangleInterpolatePoint(triangle, b0, b1, b2);
+                    frag.coords = {p.x, p.y};
+
+                    ColorRGBA fragColor =
+                        Renderer_CalculateFragmentLighting(r, frag);
+                    frag.color = fragColor;
+
+                    Renderer_SetPixel(r, frag.coords.x, frag.coords.y, frag.z,
+                                      ColorToInt(frag.color));
+                }
+            }
+        }
+    }
+}
+
+void Renderer_RasterizeTriangles(Renderer *r,
+                                 const std::vector<Triangle> &triangles) {
+    for (const auto &triangle : triangles) {
+        // Triangle area (for barycentric coordinates)
+        // Skip degenerate triangles
+        if (std::abs(triangle.area) < 0.0001f) {
+            return;
+        }
+
+        // Determine winding
+        bool clockwise = triangle.area < 0;
+        float invArea = 1.0f / triangle.area;
+
+        // Rasterize only within tile bounds
+        for (int y = triangle.min.y; y <= triangle.max.y; y++) {
+            for (int x = triangle.min.x; x <= triangle.max.x; x++) {
+                Vec2 p = {x + 0.5f, y + 0.5f};
+
+                float w0 = TriangleEdgeFunction(triangle.v1.coords,
+                                                triangle.v2.coords, p);
+                float w1 = TriangleEdgeFunction(triangle.v2.coords,
+                                                triangle.v0.coords, p);
+                float w2 = TriangleEdgeFunction(triangle.v0.coords,
+                                                triangle.v1.coords, p);
+
+                // Check inside based on winding
+                bool inside = clockwise ? (w0 <= 0 && w1 <= 0 && w2 <= 0)
+                                        : (w0 >= 0 && w1 >= 0 && w2 >= 0);
+
+                if (inside) {
+                    float b0 = w0 * invArea;
+                    float b1 = w1 * invArea;
+                    float b2 = w2 * invArea;
+
+                    Fragment frag =
+                        TriangleInterpolatePoint(triangle, b0, b1, b2);
+                    frag.coords = {p.x, p.y};
+
+                    ColorRGBA fragColor =
+                        Renderer_CalculateFragmentLighting(r, frag);
+                    frag.color = fragColor;
+
+                    Renderer_SetPixel(r, frag.coords.x, frag.coords.y, frag.z,
+                                      ColorToInt(frag.color));
+                }
+            }
+        }
+    }
+}
+
 void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
                             Vec3 position, Vec3 rotation, Vec3 scale,
                             ColorRGBA color) {
-    if (r == nullptr) {
-        return;
-    }
-
-    if (vertices == NULL) {
-        return;
-    }
-
     float halfWidth = (float)r->width / 2;
     float halfHeight = (float)r->height / 2;
 
@@ -109,12 +268,10 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
     model = Mat4_Scale(model, scale);
     model = Mat4_Translate(model, position);
 
-    std::vector<Pixel> pixels;
+    std::vector<Triangle> triangles;
 
     // Vertices are in local space
     for (int i = 0; i < length * size; i += (size * 3)) {
-        pixels.clear();
-
         int v1i = i;
         int v2i = i + size;
         int v3i = i + (size * 2);
@@ -123,10 +280,25 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
         Vec4 v2 = {vertices[v2i], vertices[v2i + 1], vertices[v2i + 2], 1.0f};
         Vec4 v3 = {vertices[v3i], vertices[v3i + 1], vertices[v3i + 2], 1.0f};
 
+        Vec4 v1N = {vertices[v1i + 3], vertices[v1i + 4], vertices[v1i + 5],
+                    1.0f};
+        Vec4 v2N = {vertices[v2i + 3], vertices[v2i + 4], vertices[v2i + 5],
+                    1.0f};
+        Vec4 v3N = {vertices[v3i + 3], vertices[v3i + 4], vertices[v3i + 5],
+                    1.0f};
+
         // Model -> World
         v1 = Vec4_Transform(v1, model);
         v2 = Vec4_Transform(v2, model);
         v3 = Vec4_Transform(v3, model);
+
+        v1N = Vec4_Transform(v1N, model);
+        v2N = Vec4_Transform(v2N, model);
+        v3N = Vec4_Transform(v3N, model);
+
+        Vec3 v1Norm = Vec3_Normalize({v1N.x, v1N.y, v1N.z});
+        Vec3 v2Norm = Vec3_Normalize({v2N.x, v2N.y, v2N.z});
+        Vec3 v3Norm = Vec3_Normalize({v3N.x, v3N.y, v3N.z});
 
         // World -> View
         v1 = Vec4_Transform(v1, view);
@@ -139,7 +311,7 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
         v3 = Vec4_Transform(v3, projection);
 
         // TODO: Handle the offscreen vertices later on the draw call
-        // if (v.w <= 0.0f) {
+        // if (v1.w <= 0.0f) {
         //     // Offscreen marker
         //     vertices[i] = -1.0f;
         //     vertices[i + 1] = -1.0f;
@@ -173,25 +345,61 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
         v3.y = halfHeight * (1.0f - v3.y);
         v3.z = (v3.z + 1.0f) * 0.5;
 
-        // Rendering
-        ColorRGBA p1Color = color;
-        ColorRGBA p2Color = color;
-        ColorRGBA p3Color = color;
+        ColorRGBA v1Color = color;
+        ColorRGBA v2Color = color;
+        ColorRGBA v3Color = color;
 
-        Vec3 p1Norm = {vertices[v1i + 3], vertices[v1i + 4], vertices[v1i + 5]};
-        Vec3 p2Norm = {vertices[v2i + 3], vertices[v2i + 4], vertices[v2i + 5]};
-        Vec3 p3Norm = {vertices[v3i + 3], vertices[v3i + 4], vertices[v3i + 5]};
+        Vec2 vMin = {
+            (float)std::max(
+                0, static_cast<int>(std::floor(std::min({v1.x, v2.x, v3.x})))),
+            (float)std::max(
+                0, static_cast<int>(std::floor(std::min({v1.y, v2.y, v3.y})))),
+        };
+        Vec2 vMax = {
+            (float)std::min(r->width - 1, static_cast<int>(std::ceil(
+                                              std::max({v1.x, v2.x, v3.x})))),
+            (float)std::min(r->height - 1, static_cast<int>(std::ceil(
+                                               std::max({v1.y, v2.y, v3.y})))),
+        };
 
-        Pixel p1 = {(int)v1.x, (int)v1.y, v1.z, p1Color, p1Norm};
-        Pixel p2 = {(int)v2.x, (int)v2.y, v2.z, p2Color, p2Norm};
-        Pixel p3 = {(int)v3.x, (int)v3.y, v3.z, p3Color, p3Norm};
+        Triangle triangle = {
+            .v0 = Vertex{Vec3{v1.x, v1.y, v1.z}, v1Norm, v1Color},
+            .v1 = Vertex{Vec3{v2.x, v2.y, v2.z}, v2Norm, v2Color},
+            .v2 = Vertex{Vec3{v3.x, v3.y, v3.z}, v3Norm, v3Color},
+            .min = vMin,
+            .max = vMax,
+            .area =
+                TriangleEdgeFunction(Vec3{v1.x, v1.y, v1.z},
+                                     Vec3{v2.x, v2.y, v2.z}, Vec2{v3.x, v3.y}),
+        };
 
-        // Generate all the pixels (fragments)
-        Renderer_DrawLine(r, &pixels, p1, p2);
-        Renderer_DrawLine(r, &pixels, p1, p3);
-        Renderer_DrawLine(r, &pixels, p2, p3);
+        triangles.push_back(triangle);
+    }
 
-        Renderer_FillTriangle(r, &pixels);
+    // Single-Tread
+    // Renderer_RasterizeTriangles(r, triangles);
+
+    // Rasterize Triangles Multi-Threat
+    // Render by tiles 32x32
+    const int tileSize = 32;
+    int tilesX = (r->width + tileSize - 1) / tileSize;
+    int tilesY = (r->height + tileSize - 1) / tileSize;
+
+    std::vector<std::thread> threads;
+    int numThreads = std::thread::hardware_concurrency();
+
+    for (int t = 0; t < numThreads; t++) {
+        threads.emplace_back([&, t]() {
+            for (int i = t; i < tilesX * tilesY; i += numThreads) {
+                int tx = i % tilesX;
+                int ty = i / tilesX;
+                Renderer_RasterizeTile(r, triangles, tx, ty, tileSize);
+            }
+        });
+    }
+
+    for (auto &th : threads) {
+        th.join();
     }
 }
 
@@ -384,6 +592,40 @@ ColorRGBA Renderer_CalculatePixelLighting(Renderer *r, Pixel pixel) {
         pixel.color.g * lighting.y,
         pixel.color.b * lighting.z,
         pixel.color.a,
+    };
+}
+
+ColorRGBA Renderer_CalculateFragmentLighting(Renderer *r, Fragment frag) {
+    // Ambient
+    float ambientStrength = 0.1f;
+    Vec3 lightColor = {1.0f, 1.0f, 1.0f};
+    Vec3 ambient = Vec3_ScalarMult(lightColor, ambientStrength);
+
+    Vec3 fragPos = {(float)frag.coords.x, (float)frag.coords.y, frag.z};
+
+    // Diffuse
+    Vec3 lightPos = {80.0f, 50.0f, 50.0f};
+    Vec3 norm = Vec3_Normalize(frag.normal);
+    Vec3 lightDir = Vec3_Normalize(Vec3_Subtract(lightPos, fragPos));
+    float dp = Vec3_Dot(norm, lightDir);
+    float diff = dp > 0.0 ? dp : 0.0;
+    Vec3 diffuse = Vec3_ScalarMult(lightColor, diff);
+
+    // Specular
+    float specularStrength = 0.5f;
+    Vec3 viewDir = Vec3_Normalize(Vec3_Subtract(r->camera.position, fragPos));
+    Vec3 reflectDir = Vec3_Reflect(Vec3_ScalarMult(lightDir, -1), norm);
+    float spec = powf(fmaxf(Vec3_Dot(viewDir, reflectDir), 0.0), 32);
+    Vec3 specular = Vec3_ScalarMult(lightColor, specularStrength * spec);
+
+    Vec3 lighting = Vec3_Add(ambient, diffuse);
+    lighting = Vec3_Add(lighting, specular);
+
+    return {
+        frag.color.r * lighting.x,
+        frag.color.g * lighting.y,
+        frag.color.b * lighting.z,
+        frag.color.a,
     };
 }
 
