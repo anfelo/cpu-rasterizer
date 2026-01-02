@@ -141,8 +141,8 @@ static struct {
   InitTiming();
 
   // Internal Resolution: scaled 4x to 800x600
-  // const int w = 800, h = 600, pixelSize = 1;
-  const int w = 200, h = 150, pixelSize = 4;
+  const int w = 800, h = 600, pixelSize = 1;
+  // const int w = 200, h = 150, pixelSize = 4;
 
   gRenderer = Renderer_Create(w, h, pixelSize);
   gRenderer.camera =
@@ -171,8 +171,8 @@ static struct {
 
 - (void)tick {
   float deltaTime = 0.016f;
-  // static float t = 0;
-  // t += deltaTime;
+  static float t = 0;
+  t += deltaTime;
 
   // Process camera movement
   if (keyState.w) {
@@ -200,10 +200,28 @@ static struct {
   Renderer_ClearBackground(&gRenderer, 0x101010);
 
   Vec3 position = Vec3{0.0f, 0.0f, 0.0f};
-  Vec3 rotation = Vec3{0.0f, 0.0f, 0.0f};
-  // Vec3 rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
+  // Vec3 rotation = Vec3{0.0f, 0.0f, 0.0f};
+  Vec3 rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
   Vec3 scale = Vec3{1.0f, 1.0f, 1.0f};
   ColorRGBA color = ColorRGBA{1.0f, 0.5f, 0.31f};
+  Renderer_DrawCube(&gRenderer, position, rotation, scale, color);
+
+  position = Vec3{-1.0f, 0.0f, 0.0f};
+  // rotation = Vec3{0.0f, 0.0f, 0.0f};
+  scale = Vec3{0.5f, 0.5f, 0.5f};
+  color = ColorRGBA{1.0f, 0.0f, 0.0f};
+  Renderer_DrawCube(&gRenderer, position, rotation, scale, color);
+
+  position = Vec3{1.0f, 0.0f, 0.0f};
+  // rotation = Vec3{0.0f, 0.0f, 0.0f};
+  scale = Vec3{0.5f, 0.5f, 0.5f};
+  color = ColorRGBA{0.0f, 1.0f, 0.0f};
+  Renderer_DrawCube(&gRenderer, position, rotation, scale, color);
+
+  position = Vec3{0.0f, 1.0f, 0.0f};
+  // rotation = Vec3{0.0f, 0.0f, 0.0f};
+  scale = Vec3{0.5f, 0.5f, 0.5f};
+  color = ColorRGBA{0.0f, 0.0f, 1.0f};
   Renderer_DrawCube(&gRenderer, position, rotation, scale, color);
 
   uint64_t end = mach_absolute_time();

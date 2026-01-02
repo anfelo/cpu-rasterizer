@@ -288,13 +288,13 @@ void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
                     1.0f};
 
         // Model -> World
-        v1 = Vec4_Transform(v1, model);
-        v2 = Vec4_Transform(v2, model);
-        v3 = Vec4_Transform(v3, model);
+        v1 = Vec4_Transform(v1, Mat4_Transpose(model));
+        v2 = Vec4_Transform(v2, Mat4_Transpose(model));
+        v3 = Vec4_Transform(v3, Mat4_Transpose(model));
 
-        v1N = Vec4_Transform(v1N, model);
-        v2N = Vec4_Transform(v2N, model);
-        v3N = Vec4_Transform(v3N, model);
+        v1N = Vec4_Transform(v1N, Mat4_Transpose(model));
+        v2N = Vec4_Transform(v2N, Mat4_Transpose(model));
+        v3N = Vec4_Transform(v3N, Mat4_Transpose(model));
 
         Vec3 v1Norm = Vec3_Normalize({v1N.x, v1N.y, v1N.z});
         Vec3 v2Norm = Vec3_Normalize({v2N.x, v2N.y, v2N.z});

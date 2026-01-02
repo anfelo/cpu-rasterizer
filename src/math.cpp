@@ -25,58 +25,62 @@ Mat4 Mat4_Create() {
     return m4;
 }
 
+Mat4 Mat4_Mult(Mat4 matA, Mat4 matB) {
+    float *a = matA.data;
+    float *b = matB.data;
+
+    Mat4 result = {
+        .data = {
+            a[0] * b[0] + a[1] * b[4] + a[2] * b[8] + a[3] * b[12],
+            a[0] * b[1] + a[1] * b[5] + a[2] * b[9] + a[3] * b[13],
+            a[0] * b[2] + a[1] * b[6] + a[2] * b[10] + a[3] * b[14],
+            a[0] * b[3] + a[1] * b[7] + a[2] * b[11] + a[3] * b[15],
+
+            a[4] * b[0] + a[5] * b[4] + a[6] * b[8] + a[7] * b[12],
+            a[4] * b[1] + a[5] * b[5] + a[6] * b[9] + a[7] * b[13],
+            a[4] * b[2] + a[5] * b[6] + a[6] * b[10] + a[7] * b[14],
+            a[4] * b[3] + a[5] * b[7] + a[6] * b[11] + a[7] * b[15],
+
+            a[8] * b[0] + a[9] * b[4] + a[10] * b[8] + a[11] * b[12],
+            a[8] * b[1] + a[9] * b[5] + a[10] * b[9] + a[11] * b[13],
+            a[8] * b[2] + a[9] * b[6] + a[10] * b[10] + a[11] * b[14],
+            a[8] * b[3] + a[9] * b[7] + a[10] * b[11] + a[11] * b[15],
+
+            a[12] * b[0] + a[13] * b[4] + a[14] * b[8] + a[15] * b[12],
+            a[12] * b[1] + a[13] * b[5] + a[14] * b[9] + a[15] * b[13],
+            a[12] * b[2] + a[13] * b[6] + a[14] * b[10] + a[15] * b[14],
+            a[12] * b[3] + a[13] * b[7] + a[14] * b[11] + a[15] * b[15],
+        }};
+
+    return result;
+}
+
 Mat4 Mat4_Translate(Mat4 mat4, Vec3 vec3) {
-    float *m = mat4.data;
     float tx = vec3.x;
     float ty = vec3.y;
     float tz = vec3.z;
 
-    Mat4 result = {.data = {
-                       m[0] + m[12] * tx,
-                       m[1] + m[13] * tx,
-                       m[2] + m[14] * tx,
-                       m[3] + m[15] * tx,
-                       m[4] + m[12] * ty,
-                       m[5] + m[13] * ty,
-                       m[6] + m[14] * ty,
-                       m[7] + m[15] * ty,
-                       m[8] + m[12] * tz,
-                       m[9] + m[13] * tz,
-                       m[10] + m[14] * tz,
-                       m[11] + m[15] * tz,
-                       m[12],
-                       m[13],
-                       m[14],
-                       m[15],
-                   }};
+    Mat4 T = Mat4_Create();
+    T.data[3] = tx;
+    T.data[7] = ty;
+    T.data[11] = tz;
+
+    Mat4 result = Mat4_Mult(T, mat4);
 
     return result;
 }
 
 Mat4 Mat4_Scale(Mat4 mat4, Vec3 vec3) {
-    float *m = mat4.data;
     float sx = vec3.x;
     float sy = vec3.y;
     float sz = vec3.z;
 
-    Mat4 result = {.data = {
-                       m[0] * sx,
-                       m[1] * sx,
-                       m[2] * sx,
-                       m[3] * sx,
-                       m[4] * sy,
-                       m[5] * sy,
-                       m[6] * sy,
-                       m[7] * sy,
-                       m[8] * sz,
-                       m[9] * sz,
-                       m[10] * sz,
-                       m[11] * sz,
-                       m[12],
-                       m[13],
-                       m[14],
-                       m[15],
-                   }};
+    Mat4 S = Mat4_Create();
+    S.data[0] = sx;
+    S.data[5] = sy;
+    S.data[10] = sz;
+
+    Mat4 result = Mat4_Mult(S, mat4);
 
     return result;
 }
@@ -247,6 +251,34 @@ Mat4 Mat4_LookAt(Vec3 eye, Vec3 target, Vec3 up) {
     out.data[15] = 1.0f;
 
     return out;
+}
+
+Mat4 Mat4_Transpose(Mat4 mat4) {
+    float *m = mat4.data;
+
+    Mat4 result;
+
+    result.data[0] = m[0];
+    result.data[1] = m[4];
+    result.data[2] = m[8];
+    result.data[3] = m[12];
+
+    result.data[4] = m[1];
+    result.data[5] = m[5];
+    result.data[6] = m[9];
+    result.data[7] = m[13];
+
+    result.data[8] = m[2];
+    result.data[9] = m[6];
+    result.data[10] = m[10];
+    result.data[11] = m[14];
+
+    result.data[12] = m[3];
+    result.data[13] = m[7];
+    result.data[14] = m[11];
+    result.data[15] = m[15];
+
+    return result;
 }
 
 float Vec3_Mag(Vec3 vec3) {
