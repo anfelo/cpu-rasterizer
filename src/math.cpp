@@ -348,12 +348,47 @@ float DegToRadians(float deg) {
     return deg * PI / 180.0f;
 }
 
-uint32_t ColorToInt(ColorRGBA color) {
+uint32_t ColorRGBAToInt(ColorRGBA color) {
     uint8_t red = static_cast<uint8_t>(std::min(color.r * 255.0f, 255.0f));
     uint8_t green = static_cast<uint8_t>(std::min(color.g * 255.0f, 255.0f));
     uint8_t blue = static_cast<uint8_t>(std::min(color.b * 255.0f, 255.0f));
+    uint8_t alpha = static_cast<uint8_t>(std::min(color.a * 255.0f, 255.0f));
 
-    return (0xFF << 24) | (red << 16) | (green << 8) | blue;
+    return (alpha << 24) | (red << 16) | (green << 8) | blue;
+}
+
+float LinearToSRGB(float linear) {
+    if (linear <= 0.0031308f) {
+        return 12.92f * linear;
+    } else {
+        return 1.055f * powf(linear, 1.0f / 2.4f) - 0.055f;
+    }
+}
+
+ColorRGBA ColorToSRGB(ColorRGBA linear) {
+    return (ColorRGBA){
+        .r = LinearToSRGB(linear.r),
+        .g = LinearToSRGB(linear.g),
+        .b = LinearToSRGB(linear.b),
+        .a = linear.a,
+    };
+}
+
+float SRGBToLinear(float sRGB) {
+    if (sRGB <= 0.04045f) {
+        return sRGB / 12.92f;
+    } else {
+        return powf((sRGB + 0.055f) / 1.055f, 2.4f);
+    }
+}
+
+ColorRGBA ColorToLinear(ColorRGBA sRGB) {
+    return (ColorRGBA){
+        .r = SRGBToLinear(sRGB.r),
+        .g = SRGBToLinear(sRGB.g),
+        .b = SRGBToLinear(sRGB.a),
+        .a = sRGB.a,
+    };
 }
 
 ColorRGBA LerpRGB(ColorRGBA c1, ColorRGBA c2, float t) {

@@ -18,14 +18,6 @@ struct QuadMesh {
     uint32_t vertexSize;
 };
 
-struct Pixel {
-    int x;
-    int y;
-    float depth;
-    ColorRGBA color;
-    Vec3 normal;
-};
-
 struct Fragment {
     Vec2 coords;
     Vec3 normal;
@@ -68,15 +60,16 @@ void Renderer_DrawCube(Renderer *r, Vec3 position, Vec3 rotation, Vec3 scale,
 void Renderer_DrawTriangles(Renderer *r, float *vertices, int length, int size,
                             Vec3 position, Vec3 rotation, Vec3 scale,
                             ColorRGBA color);
-void Renderer_FillTriangle(Renderer *r, std::vector<Pixel> *pixels);
-void Renderer_DrawLine(Renderer *r, std::vector<Pixel> *pixels, Pixel p1,
-                       Pixel p2);
-void Renderer_DrawLineVertical(Renderer *r, std::vector<Pixel> *pixels,
-                               Pixel p1, Pixel p2);
-void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Pixel> *pixels,
-                                 Pixel p1, Pixel p2);
+void Renderer_DrawTriangle(Renderer *r, Vec2 vertices[3], uint32_t color);
+void Renderer_FillTriangle(Renderer *r, std::vector<Vec2> *points,
+                           uint32_t color);
+void Renderer_DrawLine(Renderer *r, std::vector<Vec2> *points, Vec2 p1, Vec2 p2,
+                       uint32_t color);
+void Renderer_DrawLineVertical(Renderer *r, std::vector<Vec2> *points, Vec2 p1,
+                               Vec2 p2, uint32_t color);
+void Renderer_DrawLineHorizontal(Renderer *r, std::vector<Vec2> *points,
+                                 Vec2 p1, Vec2 p2, uint32_t color);
 
-ColorRGBA Renderer_CalculatePixelLighting(Renderer *r, Pixel pixel);
 ColorRGBA Renderer_CalculateFragmentLighting(Renderer *r, Fragment frag);
 
 CubeMesh CreateCubeMesh();

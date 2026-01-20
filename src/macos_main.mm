@@ -23,10 +23,10 @@ static struct {
   BOOL space, shift;
 } keyState = {0};
 
-@interface PixelView : NSView
+@interface RasterizerView : NSView
 @end
 
-@implementation PixelView
+@implementation RasterizerView
 
 - (BOOL)acceptsFirstResponder {
   return YES; // Required to receive keyboard events
@@ -130,7 +130,7 @@ static struct {
 
 @interface AppDelegate : NSObject <NSApplicationDelegate> {
   NSWindow *window;
-  PixelView *view;
+  RasterizerView *view;
   NSTimer *timer;
 }
 @end
@@ -156,7 +156,7 @@ static struct {
                   backing:NSBackingStoreBuffered
                     defer:NO];
 
-  view = [[PixelView alloc] initWithFrame:frame];
+  view = [[RasterizerView alloc] initWithFrame:frame];
   [window setContentView:view];
   [window setTitle:@"CPU Rasterizer"];
   [window makeKeyAndOrderFront:nil];
@@ -190,9 +190,9 @@ static struct {
   if (keyState.space) {
     gRenderer.camera.position.y += deltaTime * 2.5f; // Move up
   }
-  if (keyState.shift) {
-    gRenderer.camera.position.y -= deltaTime * 2.5f; // Move down
-  }
+  // if (keyState.shift) {
+  //   gRenderer.camera.position.y -= deltaTime * 2.5f; // Move down
+  // }
 
   uint64_t start = mach_absolute_time();
 
@@ -203,7 +203,7 @@ static struct {
   // Vec3 rotation = Vec3{0.0f, 0.0f, 0.0f};
   Vec3 rotation = Vec3{0.0f, t * 40.f, t * 20.0f};
   Vec3 scale = Vec3{1.0f, 1.0f, 1.0f};
-  ColorRGBA color = ColorRGBA{1.0f, 0.5f, 0.31f};
+  ColorRGBA color = ColorRGBA{1.0f, 0.3f, 0.1f};
   Renderer_DrawCube(&gRenderer, position, rotation, scale, color);
 
   position = Vec3{-1.0f, 0.0f, 0.0f};

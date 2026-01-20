@@ -63,7 +63,9 @@ Vec4 Vec4_Transform(Vec4 vec4, Mat4 mat4);
 
 float DegToRadians(float deg);
 
-uint32_t ColorToInt(ColorRGBA color);
+uint32_t ColorRGBAToInt(ColorRGBA color);
+ColorRGBA ColorToSRGB(ColorRGBA linear);
+ColorRGBA SRGBToLinear(ColorRGBA sRGB);
 ColorRGBA LerpRGB(ColorRGBA c1, ColorRGBA c2, float t);
 float LerpFloat(float f1, float f2, float t);
 
