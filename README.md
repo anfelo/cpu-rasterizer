@@ -2,7 +2,7 @@
 
 A software rasterizer built from scratch without GPU APIs—just pure CPU rendering.
 
-<video src="demo.mov" controls width="600"></video>
+![Demo](demo.gif)
 
 ## About
 
