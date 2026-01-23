@@ -190,9 +190,9 @@ static struct {
   if (keyState.space) {
     gRenderer.camera.position.y += deltaTime * 2.5f; // Move up
   }
-  // if (keyState.shift) {
-  //   gRenderer.camera.position.y -= deltaTime * 2.5f; // Move down
-  // }
+  if (keyState.shift) {
+    gRenderer.camera.position.y -= deltaTime * 2.5f; // Move down
+  }
 
   uint64_t start = mach_absolute_time();
 
